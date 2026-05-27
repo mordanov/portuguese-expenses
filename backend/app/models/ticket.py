@@ -1,0 +1,30 @@
+import uuid
+from datetime import datetime
+from decimal import Decimal
+
+from sqlalchemy import DateTime, ForeignKey, Numeric, String, Text, func
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.models.base import Base
+
+
+class Ticket(Base):
+    __tablename__ = "tickets"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    store_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    purchased_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    paid_by_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("family_members.id"), nullable=False)
+    raw_image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    total_price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    discount_total: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False, default=Decimal("0.00"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    paid_by: Mapped["FamilyMember"] = relationship("FamilyMember", back_populates="tickets_paid")  # noqa: F821
+    items: Mapped[list["Item"]] = relationship(  # noqa: F821
+        "Item", back_populates="ticket", cascade="all, delete-orphan", order_by="Item.position"
+    )

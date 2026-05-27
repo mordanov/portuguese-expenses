@@ -1,0 +1,186 @@
+{
+  "nav": {
+    "title": "Marinheiros Bêbados Portugueses",
+    "dashboard": "Painel",
+    "tickets": "Talões",
+    "members": "Membros",
+    "categories": "Categorias",
+    "reports": "Relatórios",
+    "balances": "Saldos",
+    "logout": "Sair"
+  },
+  "auth": {
+    "username": "Utilizador",
+    "password": "Palavra-passe",
+    "login": "Entrar",
+    "invalidCredentials": "Utilizador ou palavra-passe inválidos",
+    "required": "Campo obrigatório",
+    "loginTitle": "Iniciar Sessão",
+    "loginSubtitle": "Marinheiros Bêbados Portugueses"
+  },
+  "members": {
+    "title": "Membros da Família",
+    "add": "Adicionar Membro",
+    "name": "Nome",
+    "status": "Estado",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "deactivate": "Desactivar",
+    "activate": "Activar",
+    "confirmDeactivate": "Desactivar este membro?",
+    "confirmDeactivateDesc": "Será removido de futuras alocações, mas os registos históricos são preservados.",
+    "rename": "Renomear",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "namePlaceholder": "Inserir nome do membro",
+    "nameRequired": "Nome é obrigatório",
+    "nameMinLength": "O nome deve ter pelo menos 2 caracteres",
+    "alreadyExists": "Já existe um membro com este nome",
+    "empty": "Sem membros. Adicione o primeiro membro da família."
+  },
+  "categories": {
+    "title": "Categorias",
+    "add": "Adicionar Categoria",
+    "name": "Nome",
+    "color": "Cor",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "confirmDelete": "Eliminar esta categoria?",
+    "deleteBlocked": "Não é possível eliminar: esta categoria é utilizada por itens existentes",
+    "namePlaceholder": "Inserir nome da categoria",
+    "nameRequired": "Nome é obrigatório",
+    "colorRequired": "Cor é obrigatória",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "empty": "Sem categorias."
+  },
+  "tickets": {
+    "title": "Talões",
+    "new": "Novo Talão",
+    "store": "Loja",
+    "date": "Data",
+    "payer": "Pago por",
+    "total": "Total",
+    "items": "Itens",
+    "filters": {
+      "dateFrom": "De",
+      "dateTo": "Até",
+      "member": "Membro",
+      "category": "Categoria",
+      "clear": "Limpar filtros"
+    },
+    "empty": "Sem talões. Faça o upload do primeiro recibo.",
+    "detail": "Detalhe do Talão",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "confirmDelete": "Eliminar este talão?",
+    "confirmDeleteDesc": "O talão e todas as alocações serão eliminados permanentemente."
+  },
+  "wizard": {
+    "steps": {
+      "upload": "Upload",
+      "review": "Revisão",
+      "allocate": "Alocar",
+      "confirm": "Confirmar"
+    }
+  },
+  "upload": {
+    "dragDrop": "Arraste o recibo aqui ou clique para seleccionar",
+    "fileTypes": "JPEG, PNG, WEBP ou PDF",
+    "maxSize": "Máx. 10 MB",
+    "uploading": "A fazer upload e a extrair itens…",
+    "error": "Falha no upload. Tente novamente.",
+    "fileTooLarge": "O ficheiro excede o limite de 10 MB",
+    "invalidType": "Apenas são aceites ficheiros JPEG, PNG, WEBP ou PDF"
+  },
+  "review": {
+    "storeName": "Nome da Loja",
+    "date": "Data da Compra",
+    "payer": "Quem Pagou?",
+    "items": "Itens",
+    "name": "Nome do Item",
+    "price": "Preço",
+    "category": "Categoria",
+    "discount": "Desconto",
+    "total": "Total",
+    "addItem": "Adicionar Item",
+    "removeItem": "Remover",
+    "noCategory": "Sem categoria"
+  },
+  "allocate": {
+    "selectMembers": "Quem consumiu este item?",
+    "selectAll": "Seleccionar todos",
+    "memberCost": "Custo por membro",
+    "perMember": "por membro",
+    "noMembersSelected": "Seleccione pelo menos um membro por item"
+  },
+  "confirm": {
+    "summary": "Resumo",
+    "save": "Confirmar e Guardar",
+    "saving": "A guardar…",
+    "store": "Loja",
+    "date": "Data",
+    "payer": "Pago por",
+    "items": "Itens",
+    "memberCosts": "Custos por Membro",
+    "total": "Total",
+    "discountedTotal": "Após desconto"
+  },
+  "balances": {
+    "title": "Saldos",
+    "owes": "deve",
+    "empty": "Sem saldos em dívida.",
+    "filterByDate": "Filtrar por período",
+    "from": "De",
+    "to": "Até",
+    "apply": "Aplicar"
+  },
+  "reports": {
+    "title": "Relatórios",
+    "tabs": {
+      "summary": "Resumo",
+      "itemized": "Detalhado",
+      "categories": "Por Categoria"
+    },
+    "summary": {
+      "member": "Membro",
+      "total": "Total Gasto",
+      "empty": "Sem dados para o período seleccionado."
+    },
+    "categories": {
+      "category": "Categoria",
+      "total": "Total",
+      "percentage": "Quota",
+      "uncategorized": "Sem categoria",
+      "empty": "Sem dados para o período seleccionado."
+    },
+    "itemized": {
+      "selectMember": "Seleccionar membro",
+      "empty": "Sem itens para o membro e período seleccionados."
+    },
+    "dateFrom": "De",
+    "dateTo": "Até"
+  },
+  "dashboard": {
+    "title": "Painel",
+    "totalTickets": "Total de Talões",
+    "outstandingBalance": "Saldos em Dívida",
+    "recentTickets": "Talões Recentes",
+    "viewAll": "Ver todos",
+    "noTickets": "Sem talões.",
+    "noBalances": "Tudo liquidado!"
+  },
+  "common": {
+    "loading": "A carregar…",
+    "error": "Algo correu mal. Tente novamente.",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "back": "Voltar",
+    "next": "Seguinte",
+    "confirm": "Confirmar",
+    "yes": "Sim",
+    "no": "Não"
+  }
+}

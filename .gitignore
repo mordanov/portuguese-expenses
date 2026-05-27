@@ -33,3 +33,23 @@ desktop.ini
 
 # Agent credential files (per-role, written by project-administrator bootstrap)
 */credentials.json
+
+# Environment secrets — never commit
+*.env
+project-administrator/agent_metrics.db
+
+# Backend
+backend/uploads/
+backend/**/__pycache__/
+backend/.venv/
+backend/*.egg-info/
+backend/dist/
+backend/.mypy_cache/
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/

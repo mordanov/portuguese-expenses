@@ -41,7 +41,10 @@ Login with username + password. Returns JWT.
 
 List all family members.
 
-**Query params**: `?active_only=true` (default `false` — returns all)
+**Query params**:
+- `active_only` (boolean, default `false`) — when `true`, returns only active members
+- `page` (integer, default `1`)
+- `page_size` (integer, default `20`, max `100`)
 
 **Response 200**:
 ```json
@@ -101,6 +104,10 @@ Soft-delete (sets `is_active = false`).
 
 ### `GET /categories`
 
+**Query params**:
+- `page` (integer, default `1`)
+- `page_size` (integer, default `20`, max `100`)
+
 **Response 200**:
 ```json
 {
@@ -139,9 +146,16 @@ Soft-delete (sets `is_active = false`).
 
 ### `POST /tickets/upload`
 
-Upload receipt image or PDF for OCR extraction. Does NOT save — returns draft only.
+Upload receipt image or PDF for OCR extraction.
+
+**File handling**: The server saves the file to `UPLOAD_DIR` using a UUID v4 filename (e.g.
+`a1b2c3d4-uuid.jpg`). The client-supplied filename is **never** used in filesystem paths.
+The saved path is returned as `raw_image_url` in the draft so the client can pass it to
+`POST /tickets`. Orphan files (wizard abandoned) are cleaned up by a startup sweep of
+`UPLOAD_DIR` for files older than 24 hours not referenced by any ticket.
 
 **Request**: `multipart/form-data` with field `file` (JPEG, PNG, WEBP, PDF; max 10 MB).
+MIME type is validated from magic bytes — not from `Content-Type` header or file extension.
 
 **Response 200** — draft for review:
 ```json
@@ -153,9 +167,13 @@ Upload receipt image or PDF for OCR extraction. Does NOT save — returns draft 
     { "name": "Wine Alentejo", "price": "5.99" }
   ],
   "discount_total": "0.50",
-  "total_price": "6.98"
+  "total_price": "6.98",
+  "raw_image_url": "/uploads/a1b2c3d4-uuid.jpg"
 }
 ```
+
+`raw_image_url` is the server-relative path to the saved file. Pass this value unchanged
+in `POST /tickets`. `null` if file storage fails non-fatally (OCR draft still returned).
 
 **Response 422**: Unsupported file type or exceeds 10 MB.
 **Response 503**: OCR service unavailable.
@@ -203,7 +221,7 @@ Paginated, filterable ticket list.
 
 **Query params**:
 - `from` (ISO8601 date), `to` (ISO8601 date)
-- `member_id` (UUID) — filter tickets where member has at least one allocation
+- `member_id` (UUID) — filter tickets where member appears in at least one `allocations` row for that ticket's items (join path: tickets → items → allocations); does NOT match on `paid_by_id` alone
 - `category_id` (UUID) — filter tickets containing items with this category
 - `page`, `page_size`
 
@@ -260,12 +278,26 @@ Full ticket detail including items and allocations.
 
 ### `PUT /tickets/{id}`
 
-Update ticket header fields (store name, purchased_at, paid_by_id, total_price,
-discount_total). Recalculates `discounted_price` for all items.
+Update ticket **header fields only** (store_name, purchased_at, paid_by_id, total_price,
+discount_total). Recalculates `discounted_price` for all existing items using their stored
+`price` values and the new `discount_total`. Item prices and allocations are unchanged.
 
-**Request**: Same schema as `POST /tickets` but all fields optional.
+To edit individual item prices → use `PUT /items/{id}`.
+To change item allocations → use `PUT /items/{id}/allocations`.
 
-**Response 200**: Updated ticket (same as GET /tickets/{id}).
+**Request** (all fields optional):
+```json
+{
+  "store_name": "string",
+  "purchased_at": "ISO8601",
+  "paid_by_id": "uuid",
+  "total_price": "7.50",
+  "discount_total": "1.00"
+}
+```
+
+**Response 200**: Updated ticket (same full schema as GET /tickets/{id}), with all items'
+`discounted_price` fields recomputed.
 
 ### `DELETE /tickets/{id}`
 
@@ -280,14 +312,20 @@ Hard delete ticket (cascades to items and allocations).
 ### `PUT /items/{id}`
 
 Update an individual item's name, price, category, or position.
-Recalculates `discounted_price` for all items on the parent ticket.
+When `price` is updated, `discounted_price` is recomputed for **all items** on the parent
+ticket (single transaction) using the ticket's current `discount_total`.
 
 **Request** (all optional):
 ```json
 { "name": "string", "price": "2.00", "category_id": "uuid | null", "position": 1 }
 ```
 
-**Response 200**: Updated item object (same shape as items array in GET /tickets/{id}).
+**Response 200**: Full updated **ticket** (same schema as `GET /tickets/{id}`).
+The frontend must replace its cached ticket with this response — sibling items
+have updated `discounted_price` values.
+
+> Note: returns the full ticket (not just the item) so the frontend can display
+> correct discounted prices for all items without a separate refetch.
 
 ### `PUT /items/{id}/allocations`
 
@@ -311,9 +349,11 @@ Replace the full allocation list for one item.
 
 ### `GET /balances`
 
-Pairwise net balances.
+Pairwise net balances. See `research.md` "Pairwise Balance Algorithm" for the two-pass
+CTE implementation.
 
-**Query params**: `from` (ISO8601 date), `to` (ISO8601 date) — both optional.
+**Query params**: `from` (ISO8601 date), `to` (ISO8601 date) — both optional; filter
+applies to `ticket.purchased_at`.
 
 **Response 200**:
 ```json
@@ -329,7 +369,9 @@ Pairwise net balances.
 }
 ```
 
-Only net-positive rows are returned (if Alice owes Bob €0, the row is omitted).
+`as_of` is the UTC timestamp at the time of the request.
+Only rows where net `amount > "0.00"` are returned — zero-balance rows are excluded.
+All `amount` values are strings with exactly 2 decimal places (e.g. `"20.00"`).
 
 ---
 
@@ -398,6 +440,19 @@ Spending by category.
   ],
   "uncategorized": "45.00"
 }
+```
+
+---
+
+## Health
+
+### `GET /health`
+
+Docker Compose health check. No authentication required.
+
+**Response 200**:
+```json
+{ "status": "ok" }
 ```
 
 ---

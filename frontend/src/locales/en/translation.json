@@ -1,0 +1,186 @@
+{
+  "nav": {
+    "title": "Portuguese Drunk Sailors",
+    "dashboard": "Dashboard",
+    "tickets": "Tickets",
+    "members": "Members",
+    "categories": "Categories",
+    "reports": "Reports",
+    "balances": "Balances",
+    "logout": "Logout"
+  },
+  "auth": {
+    "username": "Username",
+    "password": "Password",
+    "login": "Log In",
+    "invalidCredentials": "Invalid username or password",
+    "required": "This field is required",
+    "loginTitle": "Sign In",
+    "loginSubtitle": "Portuguese Drunk Sailors"
+  },
+  "members": {
+    "title": "Family Members",
+    "add": "Add Member",
+    "name": "Name",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "confirmDeactivate": "Deactivate this member?",
+    "confirmDeactivateDesc": "They will be removed from future allocations but historical records are preserved.",
+    "rename": "Rename",
+    "save": "Save",
+    "cancel": "Cancel",
+    "namePlaceholder": "Enter member name",
+    "nameRequired": "Name is required",
+    "nameMinLength": "Name must be at least 2 characters",
+    "alreadyExists": "A member with this name already exists",
+    "empty": "No members yet. Add the first family member."
+  },
+  "categories": {
+    "title": "Categories",
+    "add": "Add Category",
+    "name": "Name",
+    "color": "Color",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirmDelete": "Delete this category?",
+    "deleteBlocked": "Cannot delete: this category is used by existing items",
+    "namePlaceholder": "Enter category name",
+    "nameRequired": "Name is required",
+    "colorRequired": "Color is required",
+    "save": "Save",
+    "cancel": "Cancel",
+    "empty": "No categories yet."
+  },
+  "tickets": {
+    "title": "Tickets",
+    "new": "New Ticket",
+    "store": "Store",
+    "date": "Date",
+    "payer": "Paid by",
+    "total": "Total",
+    "items": "Items",
+    "filters": {
+      "dateFrom": "From",
+      "dateTo": "To",
+      "member": "Member",
+      "category": "Category",
+      "clear": "Clear filters"
+    },
+    "empty": "No tickets yet. Upload your first receipt.",
+    "detail": "Ticket Detail",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirmDelete": "Delete this ticket?",
+    "confirmDeleteDesc": "This will permanently remove the ticket and all its allocations."
+  },
+  "wizard": {
+    "steps": {
+      "upload": "Upload",
+      "review": "Review",
+      "allocate": "Allocate",
+      "confirm": "Confirm"
+    }
+  },
+  "upload": {
+    "dragDrop": "Drag & drop your receipt here, or click to select",
+    "fileTypes": "JPEG, PNG, WEBP or PDF",
+    "maxSize": "Max 10 MB",
+    "uploading": "Uploading and extracting items…",
+    "error": "Upload failed. Please try again.",
+    "fileTooLarge": "File exceeds 10 MB limit",
+    "invalidType": "Only JPEG, PNG, WEBP, or PDF files are accepted"
+  },
+  "review": {
+    "storeName": "Store Name",
+    "date": "Purchase Date",
+    "payer": "Who Paid?",
+    "items": "Items",
+    "name": "Item Name",
+    "price": "Price",
+    "category": "Category",
+    "discount": "Discount",
+    "total": "Total",
+    "addItem": "Add Item",
+    "removeItem": "Remove",
+    "noCategory": "No category"
+  },
+  "allocate": {
+    "selectMembers": "Who consumed this item?",
+    "selectAll": "Select all",
+    "memberCost": "Cost per member",
+    "perMember": "per member",
+    "noMembersSelected": "Select at least one member per item"
+  },
+  "confirm": {
+    "summary": "Summary",
+    "save": "Confirm & Save",
+    "saving": "Saving…",
+    "store": "Store",
+    "date": "Date",
+    "payer": "Paid by",
+    "items": "Items",
+    "memberCosts": "Member Costs",
+    "total": "Total",
+    "discountedTotal": "After discount"
+  },
+  "balances": {
+    "title": "Balances",
+    "owes": "owes",
+    "empty": "No outstanding balances.",
+    "filterByDate": "Filter by date range",
+    "from": "From",
+    "to": "To",
+    "apply": "Apply"
+  },
+  "reports": {
+    "title": "Reports",
+    "tabs": {
+      "summary": "Summary",
+      "itemized": "Itemized",
+      "categories": "By Category"
+    },
+    "summary": {
+      "member": "Member",
+      "total": "Total Spent",
+      "empty": "No data for selected period."
+    },
+    "categories": {
+      "category": "Category",
+      "total": "Total",
+      "percentage": "Share",
+      "uncategorized": "Uncategorized",
+      "empty": "No data for selected period."
+    },
+    "itemized": {
+      "selectMember": "Select a member",
+      "empty": "No items for selected member and period."
+    },
+    "dateFrom": "From",
+    "dateTo": "To"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "totalTickets": "Total Tickets",
+    "outstandingBalance": "Outstanding Balances",
+    "recentTickets": "Recent Tickets",
+    "viewAll": "View all",
+    "noTickets": "No tickets yet.",
+    "noBalances": "All settled up!"
+  },
+  "common": {
+    "loading": "Loading…",
+    "error": "Something went wrong. Please try again.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No"
+  }
+}

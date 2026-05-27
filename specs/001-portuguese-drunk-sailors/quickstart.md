@@ -29,7 +29,8 @@ POSTGRES_DB=portuguese_expenses
 DATABASE_URL=postgresql+asyncpg://postgres:changeme@db:5432/portuguese_expenses
 
 # JWT (RS256) — generate with: openssl genrsa -out private.pem 2048
-JWT_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+# OpenSSL 3.x outputs PKCS#8 format (BEGIN PRIVATE KEY) — accepted by python-jose RS256
+JWT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
 JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
 JWT_ALGORITHM=RS256
 JWT_EXPIRE_MINUTES=480
@@ -77,16 +78,20 @@ Login with the credentials from `APP_USER_1_USERNAME` / `APP_USER_1_PASSWORD`.
 ## Generate RSA Key Pair
 
 ```bash
-# Private key
+# Private key (OpenSSL 3.x outputs PKCS#8 — compatible with python-jose RS256)
 openssl genrsa -out private.pem 2048
 
 # Public key
 openssl rsa -in private.pem -pubout -out public.pem
 
-# Paste contents into .env (collapse newlines to \n literals)
+# Collapse newlines to \n literals before pasting into .env
 awk 'NR==1{printf "%s", $0; next} {printf "\\n%s", $0} END{print ""}' private.pem
 awk 'NR==1{printf "%s", $0; next} {printf "\\n%s", $0} END{print ""}' public.pem
 ```
+
+> **Verified**: `openssl genrsa` on OpenSSL 3.x produces `-----BEGIN PRIVATE KEY-----` (PKCS#8).
+> `python-jose` accepts this format for RS256 sign and verify. Do not attempt to convert to
+> legacy PKCS#1 format — the commands above are correct as written.
 
 ## Run Backend Tests
 
@@ -138,3 +143,22 @@ After `docker compose up --build` completes:
 - [ ] Balance screen shows correct net amounts
 - [ ] Reports return data filtered by selected date range
 - [ ] `pytest --cov=app --cov-fail-under=80` exits 0
+
+## Pre-Docker Validation Results (T121 — 2026-05-27)
+
+Docker daemon was unavailable for live `docker compose up --build` run.
+Static and local validation completed instead:
+
+| Check | Result |
+|-------|--------|
+| `docker-compose config` syntax | ✅ VALID |
+| Backend Python syntax (`py_compile`) | ✅ PASS |
+| Backend tests (`pytest`) | ✅ 77/77 pass |
+| Backend coverage (`--cov-fail-under=80`) | ✅ 80.91% |
+| Frontend TypeScript build (`tsc -b && vite build`) | ✅ 0 errors |
+| Frontend tests (`vitest run`) | ✅ 17/17 pass |
+| Health endpoint `GET /health` | ✅ exists in `app/routers/health.py` |
+| `docker-compose.yml` healthcheck (backend) | ✅ `curl -f http://localhost:8000/health` |
+| `.dockerignore` (backend + frontend) | ✅ prevents secret baking |
+
+**To complete T121**: start Colima (`colima start`) then run `docker compose up --build`.

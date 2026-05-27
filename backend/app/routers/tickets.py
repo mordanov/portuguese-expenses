@@ -1,0 +1,189 @@
+import uuid
+from datetime import datetime
+from decimal import Decimal
+
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import get_async_session
+from app.dependencies import get_current_user
+from app.schemas.ticket import OCRDraft, TicketCreateRequest, TicketListResponse, TicketResponse
+from app.services.ocr_service import OCRParseError, OCRService, OCRServiceError, UploadValidationError
+from app.services.ticket_service import TicketService
+
+router = APIRouter(prefix="/tickets", tags=["tickets"])
+
+
+def _ticket_to_response(ticket) -> dict:
+    items = []
+    for item in ticket.items:
+        allocation_count = len(item.allocations)
+        cost_per_member = (
+            (item.discounted_price / allocation_count).quantize(Decimal("0.01"))
+            if allocation_count > 0
+            else Decimal("0.00")
+        )
+        items.append(
+            {
+                "id": str(item.id),
+                "name": item.name,
+                "price": str(item.price),
+                "discounted_price": str(item.discounted_price),
+                "position": item.position,
+                "category": (
+                    {
+                        "id": str(item.category.id),
+                        "name": item.category.name,
+                        "color": item.category.color,
+                    }
+                    if item.category
+                    else None
+                ),
+                "allocated_members": [
+                    {
+                        "id": str(alloc.member.id),
+                        "name": alloc.member.name,
+                        "cost": str(cost_per_member),
+                    }
+                    for alloc in item.allocations
+                ],
+            }
+        )
+    return {
+        "id": str(ticket.id),
+        "store_name": ticket.store_name,
+        "purchased_at": ticket.purchased_at.isoformat(),
+        "paid_by": {"id": str(ticket.paid_by.id), "name": ticket.paid_by.name},
+        "raw_image_url": ticket.raw_image_url,
+        "total_price": str(ticket.total_price),
+        "discount_total": str(ticket.discount_total),
+        "created_at": ticket.created_at.isoformat(),
+        "items": items,
+    }
+
+
+def get_ocr_service() -> OCRService:
+    return OCRService()
+
+
+@router.post("/upload", response_model=OCRDraft)
+async def upload_receipt(
+    file: UploadFile,
+    _: str = Depends(get_current_user),
+    ocr_service: OCRService = Depends(get_ocr_service),
+) -> OCRDraft:
+    try:
+        return await ocr_service.process_upload(file)
+    except UploadValidationError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+    except OCRParseError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+    except OCRServiceError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc))
+
+
+@router.post("", status_code=status.HTTP_201_CREATED)
+async def create_ticket(
+    body: TicketCreateRequest,
+    session: AsyncSession = Depends(get_async_session),
+    _: str = Depends(get_current_user),
+) -> dict:
+    service = TicketService(session)
+    ticket = await service.save_ticket(body)
+    await session.commit()
+    ticket = await service.repo.get_ticket_with_detail(ticket.id)
+    return _ticket_to_response(ticket)
+
+
+@router.get("")
+async def list_tickets(
+    page: int = 1,
+    page_size: int = Query(default=20, ge=1, le=100),
+    from_date: datetime | None = None,
+    to_date: datetime | None = None,
+    member_id: uuid.UUID | None = None,
+    category_id: uuid.UUID | None = None,
+    session: AsyncSession = Depends(get_async_session),
+    _: str = Depends(get_current_user),
+) -> dict:
+    from app.repositories.ticket_repository import TicketRepository
+
+    repo = TicketRepository(session)
+    tickets, total = await repo.list_tickets(
+        page=page,
+        page_size=page_size,
+        from_date=from_date,
+        to_date=to_date,
+        member_id=member_id,
+        category_id=category_id,
+    )
+    items = [
+        {
+            "id": str(t.id),
+            "store_name": t.store_name,
+            "purchased_at": t.purchased_at.isoformat(),
+            "paid_by": {"id": str(t.paid_by.id), "name": t.paid_by.name},
+            "total_price": str(t.total_price),
+            "discount_total": str(t.discount_total),
+            "created_at": t.created_at.isoformat(),
+        }
+        for t in tickets
+    ]
+    return {"items": items, "total": total, "page": page, "page_size": page_size}
+
+
+@router.get("/{ticket_id}")
+async def get_ticket(
+    ticket_id: uuid.UUID,
+    session: AsyncSession = Depends(get_async_session),
+    _: str = Depends(get_current_user),
+) -> dict:
+    service = TicketService(session)
+    ticket = await service.get_ticket(ticket_id)
+    return _ticket_to_response(ticket)
+
+
+@router.put("/{ticket_id}")
+async def update_ticket(
+    ticket_id: uuid.UUID,
+    body: dict,
+    session: AsyncSession = Depends(get_async_session),
+    _: str = Depends(get_current_user),
+) -> dict:
+    from app.repositories.ticket_repository import TicketRepository
+    from app.schemas.ticket import TicketUpdateRequest
+
+    repo = TicketRepository(session)
+    ticket = await repo.get_by_id(ticket_id)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    update = TicketUpdateRequest(**body)
+    if update.store_name is not None:
+        ticket.store_name = update.store_name
+    if update.purchased_at is not None:
+        ticket.purchased_at = update.purchased_at
+    if update.paid_by_id is not None:
+        ticket.paid_by_id = update.paid_by_id
+    if update.total_price is not None:
+        ticket.total_price = Decimal(update.total_price)
+    if update.discount_total is not None:
+        ticket.discount_total = Decimal(update.discount_total)
+    if update.raw_image_url is not None:
+        ticket.raw_image_url = update.raw_image_url
+
+    await session.flush()
+    await session.commit()
+    ticket = await repo.get_ticket_with_detail(ticket_id)
+    return _ticket_to_response(ticket)
+
+
+@router.delete("/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_ticket(
+    ticket_id: uuid.UUID,
+    session: AsyncSession = Depends(get_async_session),
+    _: str = Depends(get_current_user),
+) -> None:
+    service = TicketService(session)
+    await service.delete_ticket(ticket_id)
+    await session.commit()
