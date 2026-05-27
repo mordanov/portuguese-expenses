@@ -82,7 +82,7 @@ export default function TicketsPage() {
 
       <div className="space-y-3">
         {tickets.map((ticket) => {
-          const payer = membersData?.items.find((m) => m.id === ticket.paid_by_id)
+          const payer = ticket.paid_by
           return (
             <Link
               key={ticket.id}

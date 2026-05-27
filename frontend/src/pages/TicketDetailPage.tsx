@@ -1,7 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useTicket, useDeleteTicket } from '../api/tickets'
-import { useMembers } from '../api/members'
 import { useCategories } from '../api/categories'
 import MoneyDisplay from '../components/shared/MoneyDisplay'
 
@@ -10,16 +9,14 @@ export default function TicketDetailPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { data: ticket, isLoading } = useTicket(id ?? '')
-  const { data: membersData } = useMembers()
   const { data: categoriesData } = useCategories()
   const { mutateAsync: deleteTicket } = useDeleteTicket()
 
   if (isLoading) return <p className="text-gray-500">{t('common.loading')}</p>
   if (!ticket) return <p className="text-gray-500">{t('common.error')}</p>
 
-  const members = membersData?.items ?? []
   const categories = categoriesData?.items ?? []
-  const payer = members.find((m) => m.id === ticket.paid_by_id)
+  const payer = ticket.paid_by
 
   async function handleDelete() {
     if (!window.confirm(t('tickets.confirmDeleteDesc'))) return

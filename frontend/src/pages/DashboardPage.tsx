@@ -60,7 +60,6 @@ export default function DashboardPage() {
           )}
           <div className="space-y-2">
             {recentTickets.map((ticket) => {
-              const payer = members.find((m) => m.id === ticket.paid_by_id)
               return (
                 <Link
                   key={ticket.id}
@@ -69,7 +68,7 @@ export default function DashboardPage() {
                 >
                   <div>
                     <p className="font-medium text-gray-800 text-sm">{ticket.store_name}</p>
-                    <p className="text-xs text-gray-400">{ticket.purchased_at.slice(0, 10)} · {payer?.name}</p>
+                    <p className="text-xs text-gray-400">{ticket.purchased_at.slice(0, 10)} · {ticket.paid_by.name}</p>
                   </div>
                   <MoneyDisplay amount={ticket.total_price} className="font-semibold text-pt-green text-sm" />
                 </Link>

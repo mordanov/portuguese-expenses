@@ -28,7 +28,7 @@ export interface Ticket {
   id: string
   store_name: string
   purchased_at: string
-  paid_by_id: string
+  paid_by: { id: string; name: string }
   discount_total: string
   total_price: string
   items: TicketItem[]
