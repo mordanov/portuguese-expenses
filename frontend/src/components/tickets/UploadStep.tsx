@@ -93,7 +93,7 @@ export default function UploadStep({ onSuccess, onManual }: UploadStepProps) {
 
       <div className="flex items-center gap-3 w-full max-w-lg">
         <div className="flex-1 h-px bg-gray-200" />
-        <span className="text-sm text-gray-400">or</span>
+        <span className="text-sm text-gray-400">{t('upload.or')}</span>
         <div className="flex-1 h-px bg-gray-200" />
       </div>
 
@@ -102,7 +102,7 @@ export default function UploadStep({ onSuccess, onManual }: UploadStepProps) {
         onClick={onManual}
         className="text-sm text-pt-green hover:text-green-800 font-medium underline underline-offset-2"
       >
-        Enter ticket manually
+        {t('upload.enterManually')}
       </button>
     </div>
   )

@@ -95,7 +95,7 @@ export default function ReportsPage() {
         </div>
         {appliedFrom && appliedTo && (
           <p className="text-xs text-gray-400 mt-2">
-            Showing: {appliedFrom} → {appliedTo}
+            {t('reports.showing')}: {appliedFrom} → {appliedTo}
           </p>
         )}
       </div>

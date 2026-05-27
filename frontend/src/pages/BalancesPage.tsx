@@ -132,31 +132,31 @@ export default function BalancesPage() {
         </div>
         <div className="flex flex-wrap gap-4">
           <div className="flex-1 min-w-36">
-            <label className="block text-xs text-gray-500 mb-1">Who owes</label>
+            <label className="block text-xs text-gray-500 mb-1">{t('balances.whoOwes')}</label>
             <select
               value={debtorId}
               onChange={(e) => setDebtorId(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
             >
-              <option value="">— Anyone —</option>
+              <option value="">{t('balances.anyone')}</option>
               {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
             </select>
           </div>
           <div className="flex-1 min-w-36">
-            <label className="block text-xs text-gray-500 mb-1">Who do they owe</label>
+            <label className="block text-xs text-gray-500 mb-1">{t('balances.whoDoTheyOwe')}</label>
             <select
               value={creditorId}
               onChange={(e) => setCreditorId(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
             >
-              <option value="">— Anyone —</option>
+              <option value="">{t('balances.anyone')}</option>
               {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
             </select>
           </div>
           {(debtorId || creditorId) && (
             <div className="flex items-end">
               <button onClick={() => { setDebtorId(''); setCreditorId('') }} className="text-xs text-gray-400 hover:text-gray-600 underline pb-2">
-                Clear
+                {t('balances.clear')}
               </button>
             </div>
           )}
@@ -167,19 +167,19 @@ export default function BalancesPage() {
       <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <p className="text-sm font-medium text-gray-700">Offsetting</p>
-            <p className="text-xs text-gray-400">Redirect someone's credits to another person — view only, nothing is saved</p>
+            <p className="text-sm font-medium text-gray-700">{t('balances.offsetting.title')}</p>
+            <p className="text-xs text-gray-400">{t('balances.offsetting.description')}</p>
           </div>
           <button
             onClick={addRule}
             className="text-xs text-pt-green hover:text-green-800 font-medium border border-pt-green rounded px-2 py-1 transition-colors"
           >
-            + Add rule
+            {t('balances.offsetting.addRule')}
           </button>
         </div>
 
         {offsetRules.length === 0 && (
-          <p className="text-xs text-gray-400 italic">No rules yet.</p>
+          <p className="text-xs text-gray-400 italic">{t('balances.offsetting.noRules')}</p>
         )}
 
         <div className="space-y-2">
@@ -190,16 +190,16 @@ export default function BalancesPage() {
                 onChange={(e) => updateRule(idx, 'absorberId', e.target.value)}
                 className="flex-1 min-w-28 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
               >
-                <option value="">— person —</option>
+                <option value="">{t('balances.offsetting.person')}</option>
                 {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select>
-              <span className="text-xs text-gray-500 shrink-0">takes debts owed to</span>
+              <span className="text-xs text-gray-500 shrink-0">{t('balances.offsetting.takesDebtsOwedTo')}</span>
               <select
                 value={rule.absorbedId}
                 onChange={(e) => updateRule(idx, 'absorbedId', e.target.value)}
                 className="flex-1 min-w-28 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
               >
-                <option value="">— person —</option>
+                <option value="">{t('balances.offsetting.person')}</option>
                 {members
                   .filter((m) => m.id !== rule.absorberId)
                   .map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
@@ -207,7 +207,7 @@ export default function BalancesPage() {
               <button
                 onClick={() => removeRule(idx)}
                 className="text-gray-400 hover:text-red-500 text-sm shrink-0"
-                aria-label="Remove rule"
+                aria-label={t('balances.offsetting.removeRule')}
               >
                 ✕
               </button>
@@ -217,7 +217,7 @@ export default function BalancesPage() {
 
         {activeRules.length > 0 && (
           <p className="text-xs text-pt-green mt-3 font-medium">
-            {activeRules.length} rule{activeRules.length > 1 ? 's' : ''} applied
+            {t('balances.offsetting.rulesApplied', { count: activeRules.length })}
           </p>
         )}
       </div>

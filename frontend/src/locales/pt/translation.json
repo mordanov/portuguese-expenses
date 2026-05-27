@@ -91,7 +91,9 @@
     "uploading": "A fazer upload e a extrair itens…",
     "error": "Falha no upload. Tente novamente.",
     "fileTooLarge": "O ficheiro excede o limite de 10 MB",
-    "invalidType": "Apenas são aceites ficheiros JPEG, PNG, WEBP ou PDF"
+    "invalidType": "Apenas são aceites ficheiros JPEG, PNG, WEBP ou PDF",
+    "or": "ou",
+    "enterManually": "Introduzir talão manualmente"
   },
   "review": {
     "storeName": "Nome da Loja",
@@ -133,7 +135,22 @@
     "filterByDate": "Filtrar por período",
     "from": "De",
     "to": "Até",
-    "apply": "Aplicar"
+    "apply": "Aplicar",
+    "whoOwes": "Quem deve",
+    "whoDoTheyOwe": "A quem deve",
+    "anyone": "— Qualquer —",
+    "clear": "Limpar",
+    "offsetting": {
+      "title": "Compensação",
+      "description": "Redirecionar créditos de uma pessoa para outra — apenas visualização, nada é guardado",
+      "addRule": "+ Adicionar regra",
+      "noRules": "Sem regras ainda.",
+      "person": "— pessoa —",
+      "takesDebtsOwedTo": "assume dívidas devidas a",
+      "removeRule": "Remover regra",
+      "rulesApplied_one": "{{count}} regra aplicada",
+      "rulesApplied_other": "{{count}} regras aplicadas"
+    }
   },
   "reports": {
     "title": "Relatórios",
@@ -159,7 +176,8 @@
       "empty": "Sem itens para o membro e período seleccionados."
     },
     "dateFrom": "De",
-    "dateTo": "Até"
+    "dateTo": "Até",
+    "showing": "A mostrar"
   },
   "dashboard": {
     "title": "Painel",
@@ -181,6 +199,9 @@
     "next": "Seguinte",
     "confirm": "Confirmar",
     "yes": "Sim",
-    "no": "Não"
+    "no": "Não",
+    "from": "De",
+    "to": "Até",
+    "clear": "Limpar"
   }
 }

@@ -91,7 +91,9 @@
     "uploading": "Uploading and extracting items…",
     "error": "Upload failed. Please try again.",
     "fileTooLarge": "File exceeds 10 MB limit",
-    "invalidType": "Only JPEG, PNG, WEBP, or PDF files are accepted"
+    "invalidType": "Only JPEG, PNG, WEBP, or PDF files are accepted",
+    "or": "or",
+    "enterManually": "Enter ticket manually"
   },
   "review": {
     "storeName": "Store Name",
@@ -133,7 +135,22 @@
     "filterByDate": "Filter by date range",
     "from": "From",
     "to": "To",
-    "apply": "Apply"
+    "apply": "Apply",
+    "whoOwes": "Who owes",
+    "whoDoTheyOwe": "Who do they owe",
+    "anyone": "— Anyone —",
+    "clear": "Clear",
+    "offsetting": {
+      "title": "Offsetting",
+      "description": "Redirect someone's credits to another person — view only, nothing is saved",
+      "addRule": "+ Add rule",
+      "noRules": "No rules yet.",
+      "person": "— person —",
+      "takesDebtsOwedTo": "takes debts owed to",
+      "removeRule": "Remove rule",
+      "rulesApplied_one": "{{count}} rule applied",
+      "rulesApplied_other": "{{count}} rules applied"
+    }
   },
   "reports": {
     "title": "Reports",
@@ -159,7 +176,8 @@
       "empty": "No items for selected member and period."
     },
     "dateFrom": "From",
-    "dateTo": "To"
+    "dateTo": "To",
+    "showing": "Showing"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -181,6 +199,9 @@
     "next": "Next",
     "confirm": "Confirm",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "from": "From",
+    "to": "To",
+    "clear": "Clear"
   }
 }
