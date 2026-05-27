@@ -19,6 +19,14 @@ function toReviewData(draft: OCRDraft): ReviewData {
   }
 }
 
+const EMPTY_REVIEW: ReviewData = {
+  store_name: '',
+  purchased_at: new Date().toISOString().slice(0, 10),
+  paid_by_id: '',
+  discount_total: '0.00',
+  items: [{ name: '', price: '0.00', category_id: null }],
+}
+
 export default function NewTicketPage() {
   const { t } = useTranslation()
   const [step, setStep] = useState<Step>('upload')
@@ -27,6 +35,11 @@ export default function NewTicketPage() {
 
   function handleUploadSuccess(draft: OCRDraft) {
     setReviewData(toReviewData(draft))
+    setStep('review')
+  }
+
+  function handleManualEntry() {
+    setReviewData(EMPTY_REVIEW)
     setStep('review')
   }
 
@@ -69,7 +82,7 @@ export default function NewTicketPage() {
       </div>
 
       <div className="mb-8">
-        {step === 'upload' && <UploadStep onSuccess={handleUploadSuccess} />}
+        {step === 'upload' && <UploadStep onSuccess={handleUploadSuccess} onManual={handleManualEntry} />}
         {step === 'review' && reviewData && (
           <ReviewStep data={reviewData} onChange={setReviewData} />
         )}

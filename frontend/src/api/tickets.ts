@@ -123,6 +123,22 @@ export function useDeleteTicket() {
   })
 }
 
+export function useAddItem(ticketId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (item: { name: string; price: string; categoryId: string | null; memberIds: string[] }) => {
+      const response = await apiClient.post<TicketItem>(`/tickets/${ticketId}/items`, {
+        name: item.name,
+        price: item.price,
+        category_id: item.categoryId,
+        member_ids: item.memberIds,
+      })
+      return response.data
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['tickets', ticketId] }) },
+  })
+}
+
 export function useUpdateItem(ticketId: string) {
   const queryClient = useQueryClient()
   return useMutation({

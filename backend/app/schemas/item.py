@@ -3,6 +3,13 @@ import uuid
 from pydantic import BaseModel
 
 
+class ItemCreateRequest(BaseModel):
+    name: str
+    price: str
+    category_id: uuid.UUID | None = None
+    member_ids: list[uuid.UUID]
+
+
 class ItemUpdateRequest(BaseModel):
     name: str | None = None
     price: str | None = None

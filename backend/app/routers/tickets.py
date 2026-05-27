@@ -178,6 +178,66 @@ async def update_ticket(
     return _ticket_to_response(ticket)
 
 
+@router.post("/{ticket_id}/items", status_code=status.HTTP_201_CREATED)
+async def add_item_to_ticket(
+    ticket_id: uuid.UUID,
+    body: dict,
+    session: AsyncSession = Depends(get_async_session),
+    _: str = Depends(get_current_user),
+) -> dict:
+    from app.repositories.item_repository import ItemRepository
+    from app.repositories.ticket_repository import TicketRepository
+    from app.schemas.item import ItemCreateRequest
+    from app.services.ticket_service import compute_discounted_prices
+
+    try:
+        req = ItemCreateRequest(**body)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    if not req.member_ids:
+        raise HTTPException(status_code=422, detail="member_ids must not be empty")
+
+    try:
+        new_price = Decimal(req.price)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail="Invalid price value") from exc
+
+    ticket_repo = TicketRepository(session)
+    ticket = await ticket_repo.get_ticket_with_detail(ticket_id)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    existing_prices = [i.price for i in ticket.items]
+    all_prices = existing_prices + [new_price]
+    discounted = compute_discounted_prices(all_prices, ticket.discount_total)
+    new_discounted = discounted[-1]
+
+    # Recompute existing items' discounted prices
+    item_repo = ItemRepository(session)
+    for item, dp in zip(ticket.items, discounted[:-1]):
+        item.discounted_price = dp
+    await session.flush()
+
+    position = max((i.position for i in ticket.items), default=-1) + 1
+    new_item = await item_repo.create_item(
+        ticket_id=ticket_id,
+        name=req.name,
+        price=new_price,
+        discounted_price=new_discounted,
+        category_id=req.category_id,
+        position=position,
+        member_ids=req.member_ids,
+    )
+
+    # Update ticket total_price
+    ticket.total_price = sum(all_prices)
+    await session.commit()
+
+    from app.routers.items import _item_to_dict
+    return _item_to_dict(new_item)
+
+
 @router.delete("/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_ticket(
     ticket_id: uuid.UUID,

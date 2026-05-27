@@ -5,45 +5,79 @@ import { useMembers } from '../api/members'
 import SummaryTable from '../components/reports/SummaryTable'
 import CategoryPieChart from '../components/reports/CategoryPieChart'
 import MoneyDisplay from '../components/shared/MoneyDisplay'
-import DateRangePicker from '../components/shared/DateRangePicker'
 
 type Tab = 'summary' | 'itemized' | 'categories'
+
+function currentMonthRange() {
+  const now = new Date()
+  const from = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const to = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+  return { from, to }
+}
+
+const DEFAULT = currentMonthRange()
 
 export default function ReportsPage() {
   const { t } = useTranslation()
   const [tab, setTab] = useState<Tab>('summary')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  const [memberId, setMemberId] = useState('')
+
+  // Staged values (what the user is editing)
+  const [fromInput, setFromInput] = useState(DEFAULT.from)
+  const [toInput, setToInput] = useState(DEFAULT.to)
+  const [memberInput, setMemberInput] = useState('')
+
+  // Applied values (what the queries actually use)
+  const [appliedFrom, setAppliedFrom] = useState(DEFAULT.from)
+  const [appliedTo, setAppliedTo] = useState(DEFAULT.to)
+  const [appliedMember, setAppliedMember] = useState('')
+
+  function apply() {
+    setAppliedFrom(fromInput)
+    setAppliedTo(toInput)
+    setAppliedMember(memberInput)
+  }
 
   const { data: membersData } = useMembers()
-  const { data: summary } = useSummaryReport({ date_from: dateFrom, date_to: dateTo })
-  const { data: itemized } = useItemizedReport({ date_from: dateFrom, date_to: dateTo, member_id: memberId })
-  const { data: categories } = useCategoryReport({ date_from: dateFrom, date_to: dateTo })
+  const { data: summary, isLoading: summaryLoading } = useSummaryReport({ from_date: appliedFrom, to_date: appliedTo })
+  const { data: itemized, isLoading: itemizedLoading } = useItemizedReport({ from_date: appliedFrom, to_date: appliedTo, member_id: appliedMember })
+  const { data: categories, isLoading: categoriesLoading } = useCategoryReport({ from_date: appliedFrom, to_date: appliedTo })
 
   const TABS: Tab[] = ['summary', 'itemized', 'categories']
+  const loading = summaryLoading || itemizedLoading || categoriesLoading
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-800 mb-6">{t('reports.title')}</h1>
 
+      {/* Filters */}
       <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6 shadow-sm">
         <div className="flex flex-wrap gap-4 items-end">
-          <DateRangePicker
-            from={dateFrom}
-            to={dateTo}
-            onFromChange={setDateFrom}
-            onToChange={setDateTo}
-            fromLabel={t('reports.dateFrom')}
-            toLabel={t('reports.dateTo')}
-          />
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">{t('reports.dateFrom')}</label>
+            <input
+              type="date"
+              value={fromInput}
+              onChange={(e) => setFromInput(e.target.value)}
+              className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">{t('reports.dateTo')}</label>
+            <input
+              type="date"
+              value={toInput}
+              onChange={(e) => setToInput(e.target.value)}
+              className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
+            />
+          </div>
           {tab === 'itemized' && (
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">{t('reports.itemized.selectMember')}</label>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">{t('reports.itemized.selectMember')}</label>
               <select
-                value={memberId}
-                onChange={(e) => setMemberId(e.target.value)}
-                className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
+                value={memberInput}
+                onChange={(e) => setMemberInput(e.target.value)}
+                className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
               >
                 <option value="">—</option>
                 {(membersData?.items ?? []).map((m) => (
@@ -52,9 +86,21 @@ export default function ReportsPage() {
               </select>
             </div>
           )}
+          <button
+            onClick={apply}
+            className="px-4 py-1.5 bg-pt-green text-white text-sm font-medium rounded-lg hover:bg-green-800 transition-colors"
+          >
+            {t('balances.apply')}
+          </button>
         </div>
+        {appliedFrom && appliedTo && (
+          <p className="text-xs text-gray-400 mt-2">
+            Showing: {appliedFrom} → {appliedTo}
+          </p>
+        )}
       </div>
 
+      {/* Tabs */}
       <div className="flex gap-2 mb-6">
         {TABS.map((t_) => (
           <button
@@ -71,15 +117,23 @@ export default function ReportsPage() {
         ))}
       </div>
 
-      {tab === 'summary' && <SummaryTable rows={summary ?? []} />}
+      {loading && <p className="text-gray-400 text-sm">{t('common.loading')}</p>}
 
-      {tab === 'itemized' && (
+      {!loading && tab === 'summary' && (
+        (!summary || summary.length === 0)
+          ? <p className="text-gray-500 text-center py-8">{t('reports.summary.empty')}</p>
+          : <SummaryTable rows={summary} />
+      )}
+
+      {!loading && tab === 'itemized' && (
         <div>
-          {!memberId && <p className="text-gray-500 text-center py-8">{t('reports.itemized.selectMember')}</p>}
-          {memberId && (!itemized || itemized.length === 0) && (
+          {!appliedMember && (
+            <p className="text-gray-500 text-center py-8">{t('reports.itemized.selectMember')}</p>
+          )}
+          {appliedMember && (!itemized || itemized.length === 0) && (
             <p className="text-gray-500 text-center py-8">{t('reports.itemized.empty')}</p>
           )}
-          {memberId && itemized && itemized.length > 0 && (
+          {appliedMember && itemized && itemized.length > 0 && (
             <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50">
@@ -108,7 +162,11 @@ export default function ReportsPage() {
         </div>
       )}
 
-      {tab === 'categories' && <CategoryPieChart rows={categories ?? []} />}
+      {!loading && tab === 'categories' && (
+        (!categories || categories.length === 0)
+          ? <p className="text-gray-500 text-center py-8">{t('reports.categories.empty')}</p>
+          : <CategoryPieChart rows={categories} />
+      )}
     </div>
   )
 }

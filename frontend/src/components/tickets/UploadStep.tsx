@@ -7,9 +7,10 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pd
 
 interface UploadStepProps {
   onSuccess: (draft: OCRDraft) => void
+  onManual: () => void
 }
 
-export default function UploadStep({ onSuccess }: UploadStepProps) {
+export default function UploadStep({ onSuccess, onManual }: UploadStepProps) {
   const { t } = useTranslation()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [clientError, setClientError] = useState<string | null>(null)
@@ -89,6 +90,20 @@ export default function UploadStep({ onSuccess }: UploadStepProps) {
           {clientError}
         </div>
       )}
+
+      <div className="flex items-center gap-3 w-full max-w-lg">
+        <div className="flex-1 h-px bg-gray-200" />
+        <span className="text-sm text-gray-400">or</span>
+        <div className="flex-1 h-px bg-gray-200" />
+      </div>
+
+      <button
+        type="button"
+        onClick={onManual}
+        className="text-sm text-pt-green hover:text-green-800 font-medium underline underline-offset-2"
+      >
+        Enter ticket manually
+      </button>
     </div>
   )
 }

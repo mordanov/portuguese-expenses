@@ -22,35 +22,79 @@ export interface CategoryRow {
   percentage: string
 }
 
-export function useSummaryReport(params: { date_from: string; date_to: string }) {
+export function useSummaryReport(params: { from_date: string; to_date: string }) {
   return useQuery({
     queryKey: ['reports', 'summary', params],
     queryFn: async () => {
-      const response = await apiClient.get<SummaryRow[]>('/reports/summary', { params })
-      return response.data
+      const response = await apiClient.get<{ members: { member: { id: string; name: string }; total: string }[] }>(
+        '/reports/summary',
+        { params },
+      )
+      return response.data.members.map((m): SummaryRow => ({
+        member_id: m.member.id,
+        member_name: m.member.name,
+        total: m.total,
+      }))
     },
-    enabled: Boolean(params.date_from && params.date_to),
+    enabled: Boolean(params.from_date && params.to_date),
   })
 }
 
-export function useItemizedReport(params: { date_from: string; date_to: string; member_id: string }) {
+export function useItemizedReport(params: { from_date: string; to_date: string; member_id: string }) {
   return useQuery({
     queryKey: ['reports', 'itemized', params],
     queryFn: async () => {
-      const response = await apiClient.get<ItemizedRow[]>('/reports/itemized', { params })
-      return response.data
+      const response = await apiClient.get<{
+        tickets: {
+          ticket: { id: string; store_name: string; purchased_at: string }
+          items: { name: string; discounted_price: string }[]
+        }[]
+      }>('/reports/itemized', { params })
+      const rows: ItemizedRow[] = []
+      for (const t of response.data.tickets) {
+        for (const item of t.items) {
+          rows.push({
+            ticket_id: t.ticket.id,
+            store_name: t.ticket.store_name,
+            purchased_at: t.ticket.purchased_at,
+            item_name: item.name,
+            discounted_price: item.discounted_price,
+          })
+        }
+      }
+      return rows
     },
-    enabled: Boolean(params.date_from && params.date_to && params.member_id),
+    enabled: Boolean(params.from_date && params.to_date && params.member_id),
   })
 }
 
-export function useCategoryReport(params: { date_from: string; date_to: string }) {
+export function useCategoryReport(params: { from_date: string; to_date: string }) {
   return useQuery({
     queryKey: ['reports', 'categories', params],
     queryFn: async () => {
-      const response = await apiClient.get<CategoryRow[]>('/reports/categories', { params })
-      return response.data
+      const response = await apiClient.get<{
+        categories: { category: { id: string; name: string; color: string }; total: string; percentage: string }[]
+        uncategorized: string
+      }>('/reports/categories', { params })
+      const rows: CategoryRow[] = response.data.categories.map((c) => ({
+        category_id: c.category.id,
+        category_name: c.category.name,
+        total: c.total,
+        percentage: c.percentage,
+      }))
+      if (parseFloat(response.data.uncategorized) > 0) {
+        const totalCents = rows.reduce((s, r) => s + Math.round(parseFloat(r.total) * 100), 0)
+        const uncatCents = Math.round(parseFloat(response.data.uncategorized) * 100)
+        const grandCents = totalCents + uncatCents
+        rows.push({
+          category_id: null,
+          category_name: 'Uncategorized',
+          total: response.data.uncategorized,
+          percentage: grandCents > 0 ? ((uncatCents / grandCents) * 100).toFixed(1) : '0.0',
+        })
+      }
+      return rows
     },
-    enabled: Boolean(params.date_from && params.date_to),
+    enabled: Boolean(params.from_date && params.to_date),
   })
 }

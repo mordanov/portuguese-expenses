@@ -30,6 +30,31 @@ class ItemRepository:
         )
         return list(result.scalars().all())
 
+    async def create_item(
+        self,
+        ticket_id: uuid.UUID,
+        name: str,
+        price: Decimal,
+        discounted_price: Decimal,
+        category_id: uuid.UUID | None,
+        position: int,
+        member_ids: list[uuid.UUID],
+    ) -> Item:
+        item = Item(
+            ticket_id=ticket_id,
+            name=name,
+            price=price,
+            discounted_price=discounted_price,
+            category_id=category_id,
+            position=position,
+        )
+        self.session.add(item)
+        await self.session.flush()
+        for member_id in member_ids:
+            self.session.add(Allocation(item_id=item.id, member_id=member_id))
+        await self.session.flush()
+        return await self.get_by_id_with_detail(item.id)
+
     async def update_item(
         self,
         item: Item,

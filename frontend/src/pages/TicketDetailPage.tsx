@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useTicket, useUpdateTicket, useDeleteTicket, useUpdateItem, useReplaceAllocations } from '../api/tickets'
+import { useTicket, useUpdateTicket, useDeleteTicket, useUpdateItem, useReplaceAllocations, useAddItem } from '../api/tickets'
 import { useMembers } from '../api/members'
 import { useCategories } from '../api/categories'
 import MoneyDisplay from '../components/shared/MoneyDisplay'
@@ -17,6 +17,7 @@ export default function TicketDetailPage() {
   const { mutateAsync: updateTicket, isPending: savingHeader } = useUpdateTicket()
   const { mutateAsync: updateItem } = useUpdateItem(id ?? '')
   const { mutateAsync: replaceAllocations } = useReplaceAllocations(id ?? '')
+  const { mutateAsync: addItem, isPending: addingItem } = useAddItem(id ?? '')
   const { mutateAsync: deleteTicket } = useDeleteTicket()
 
   const [editing, setEditing] = useState(false)
@@ -30,6 +31,24 @@ export default function TicketDetailPage() {
   // Per-item edit state: itemId → { name, price, categoryId, memberIds }
   type ItemEdit = { name: string; price: string; categoryId: string; memberIds: string[] }
   const [itemEdits, setItemEdits] = useState<Record<string, ItemEdit>>({})
+
+  // New item form (visible in both view and edit mode)
+  const [newItem, setNewItem] = useState<ItemEdit | null>(null)
+
+  function startNewItem() {
+    setNewItem({ name: '', price: '0.00', categoryId: '', memberIds: [] })
+  }
+
+  async function saveNewItem() {
+    if (!newItem || newItem.memberIds.length === 0) return
+    await addItem({
+      name: newItem.name,
+      price: newItem.price,
+      categoryId: newItem.categoryId || null,
+      memberIds: newItem.memberIds,
+    })
+    setNewItem(null)
+  }
 
   function enterEdit() {
     if (!ticket) return
@@ -325,6 +344,94 @@ export default function TicketDetailPage() {
           </table>
         )}
       </div>
+
+      {/* Add new item */}
+      {newItem ? (
+        <div className="bg-white border border-pt-green rounded-xl p-4 shadow-sm space-y-3">
+          <h3 className="text-sm font-semibold text-gray-700">{t('review.addItem')}</h3>
+          <div className="flex gap-2">
+            <input
+              value={newItem.name}
+              onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+              className="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
+              placeholder={t('review.name')}
+              autoFocus
+            />
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={newItem.price}
+              onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
+              className="w-24 border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-pt-green"
+              placeholder={t('review.price')}
+            />
+          </div>
+          <select
+            value={newItem.categoryId}
+            onChange={(e) => setNewItem({ ...newItem, categoryId: e.target.value })}
+            className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
+          >
+            <option value="">{t('review.noCategory')}</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+          <div>
+            <p className="text-xs text-gray-500 mb-1.5">{t('allocate.selectMembers')}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {members.map((m) => {
+                const selected = newItem.memberIds.includes(m.id)
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setNewItem({
+                      ...newItem,
+                      memberIds: selected
+                        ? newItem.memberIds.filter((id) => id !== m.id)
+                        : [...newItem.memberIds, m.id],
+                    })}
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                      selected ? 'bg-pt-green text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {m.name}
+                  </button>
+                )
+              })}
+            </div>
+            {newItem.memberIds.length === 0 && (
+              <p className="text-xs text-red-500 mt-1">{t('allocate.noMembersSelected')}</p>
+            )}
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setNewItem(null)}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              type="button"
+              onClick={saveNewItem}
+              disabled={addingItem || !newItem.name || newItem.memberIds.length === 0}
+              className="px-3 py-1.5 text-sm bg-pt-green text-white rounded-lg hover:bg-green-800 transition-colors disabled:opacity-60"
+            >
+              {addingItem ? t('confirm.saving') : t('common.save')}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={startNewItem}
+          className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-pt-green hover:text-pt-green transition-colors"
+        >
+          + {t('review.addItem')}
+        </button>
+      )}
     </div>
   )
 }
