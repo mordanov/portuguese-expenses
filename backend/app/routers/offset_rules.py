@@ -29,6 +29,7 @@ async def create_offset_rule(
 ) -> OffsetRuleResponse:
     repo = OffsetRuleRepository(session)
     rule = await repo.create(type=body.type, person_a_id=body.person_a_id, person_b_id=body.person_b_id)
+    await session.commit()
     return OffsetRuleResponse.model_validate(rule)
 
 
@@ -43,3 +44,4 @@ async def delete_offset_rule(
     if rule is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Offset rule not found")
     await repo.delete(rule)
+    await session.commit()
