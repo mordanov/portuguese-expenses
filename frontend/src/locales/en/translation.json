@@ -143,10 +143,12 @@
     "offsetting": {
       "title": "Offsetting",
       "description": "Redirect someone's credits to another person — view only, nothing is saved",
-      "addRule": "+ Add rule",
+      "addAbsorb": "+ Absorb",
+      "addTransfer": "+ Transfer",
       "noRules": "No rules yet.",
       "person": "— person —",
       "takesDebtsOwedTo": "takes debts owed to",
+      "transfersDebtsTo": "transfers their debts to",
       "removeRule": "Remove rule",
       "rulesApplied_one": "{{count}} rule applied",
       "rulesApplied_other": "{{count}} rules applied"

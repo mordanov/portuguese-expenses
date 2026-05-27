@@ -7,6 +7,12 @@ import { useTranslation } from 'react-i18next'
 import { login } from '../api/auth'
 import { isAxiosError } from 'axios'
 
+const LOCALES = [
+  { code: 'pt', flag: '🇵🇹', label: 'PT' },
+  { code: 'en', flag: '🇬🇧', label: 'EN' },
+  { code: 'ru', flag: '🇷🇺', label: 'RU' },
+]
+
 const loginSchema = z.object({
   username: z.string().min(1, 'required'),
   password: z.string().min(1, 'required'),
@@ -15,8 +21,13 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+
+  function handleLocaleChange(code: string) {
+    i18n.changeLanguage(code)
+    localStorage.setItem('i18nextLng', code)
+  }
   const [serverError, setServerError] = useState<string | null>(null)
 
   const {
@@ -98,12 +109,23 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 flex justify-center gap-2 text-lg">
-          <span>🇵🇹</span>
-          <span className="text-pt-red font-bold">|</span>
-          <span>🇬🇧</span>
-          <span className="text-pt-red font-bold">|</span>
-          <span>🇷🇺</span>
+        <div className="mt-6 flex justify-center gap-1">
+          {LOCALES.map(({ code, flag, label }, idx) => (
+            <span key={code} className="flex items-center">
+              {idx > 0 && <span className="text-gray-300 mx-1">|</span>}
+              <button
+                type="button"
+                onClick={() => handleLocaleChange(code)}
+                className={`px-2 py-1 rounded text-sm transition-colors ${
+                  i18n.language.startsWith(code)
+                    ? 'bg-pt-green text-white font-semibold'
+                    : 'text-gray-500 hover:text-pt-green'
+                }`}
+              >
+                {flag} {label}
+              </button>
+            </span>
+          ))}
         </div>
       </div>
     </div>

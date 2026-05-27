@@ -143,10 +143,12 @@
     "offsetting": {
       "title": "Compensação",
       "description": "Redirecionar créditos de uma pessoa para outra — apenas visualização, nada é guardado",
-      "addRule": "+ Adicionar regra",
+      "addAbsorb": "+ Absorver",
+      "addTransfer": "+ Transferir",
       "noRules": "Sem regras ainda.",
       "person": "— pessoa —",
       "takesDebtsOwedTo": "assume dívidas devidas a",
+      "transfersDebtsTo": "transfere as suas dívidas para",
       "removeRule": "Remover regra",
       "rulesApplied_one": "{{count}} regra aplicada",
       "rulesApplied_other": "{{count}} regras aplicadas"
