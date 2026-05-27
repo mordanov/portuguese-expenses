@@ -1,0 +1,12 @@
+.env
+*.env
+.env.local
+
+node_modules/
+dist/
+.vite/
+
+*.md
+tests/
+**/*.test.ts
+**/*.test.tsx

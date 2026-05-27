@@ -1,388 +1,509 @@
-# Portuguese Drunk Sailors / Portuguese Expenses
+# Portuguese Drunk Sailors
 
-**Portuguese Drunk Sailors** is the product specification and agent-orchestration workspace for a family expense tracking and cost allocation web application.
+**Portuguese Drunk Sailors** is a full-stack family expense tracking and cost allocation web application.
 
-The product goal is to help a household of 8 family members answer a simple but painful question after shared shopping trips:
+It is designed for a household of 8 family members who share purchases across supermarkets, groceries, wine shops, restaurants, parking, gifts, and other categories. After each shopping trip, one person pays the whole bill; the app helps the family answer:
 
-> Who consumed what, and who owes whom money?
+> Who consumed what, how much does each person owe, and who should pay whom?
 
-The repository currently contains the business requirements, constitution/governance assets, Spec Kit workflow files, and specialist agent instructions used to plan and coordinate implementation. After the changes following commit `d3622e8`, the previously tracked runnable application source, Docker Compose setup, and generated feature specs are no longer part of the tracked `HEAD` tree.
-
----
-
-## Current repository status
-
-As of the current workspace state:
-
-- The tracked repository is primarily a **planning, governance, and agent-skills repository**.
-- Product requirements are in `documentation/speckit-specify-prompt.md`.
-- Engineering governance is in `.specify/memory/constitution.md`.
-- Spec Kit commands/templates/workflows are in `.specify/` and `.claude/skills/`.
-- Specialist agent prompts are in `agents/`.
-- `install-brainstorm.sh` installs and registers Brainstorm MCP support for coordinated agent work.
-
-Local untracked folders may exist, such as `backend/`, `frontend/`, `private/`, `.env`, or `project-administrator/`. Treat those as local/generated/runtime artifacts unless they are intentionally re-added to Git.
-
-> Security note: never commit `.env`, private keys, `private/*.pem`, `project-administrator/credentials.json`, generated SQLite databases, `node_modules/`, build outputs, or uploaded receipts.
+The app supports receipt upload with OCR, editable receipt review, item-by-item allocation to family members, proportional ticket discount distribution, pairwise balance calculation, and spending reports.
 
 ---
 
-## What the product is about
+## Product overview
 
-Portuguese Drunk Sailors is intended to be a small-household expense application for shared purchases across groceries, wine shops, supermarkets, restaurants, parking, gifts, and similar categories.
+### Main workflow
 
-A typical shopping trip works like this:
+1. A user logs in with one of two pre-created application accounts.
+2. The user uploads a receipt photo or PDF.
+3. The backend extracts a draft using OpenAI `gpt-4o` vision OCR.
+4. The user reviews and edits store/date/items/categories before anything is saved.
+5. The user selects the family member who paid the bill.
+6. The user allocates each item to one or more active family members.
+7. The app distributes ticket-level discounts proportionally across items:
 
-1. One person pays the full receipt.
-2. The receipt is uploaded as a photo or PDF.
-3. OCR extracts a draft list of store/date/items/prices/discounts.
-4. The user reviews and edits the OCR result before anything is persisted.
-5. Each receipt item is allocated to one or more family members.
-6. Ticket-level discounts are distributed proportionally across items.
-7. Each item cost is split equally among allocated members.
-8. The app calculates pairwise net balances, for example: `Alice owes Bob €23.50`.
-9. Reports show spending by member, item, date range, and category.
+   ```text
+   item_discounted_price = item_price − (item_price / ticket_subtotal) × ticket_discount_total
+   ```
 
-The core discount formula from the business requirements is:
+8. Each item cost is split equally across the members allocated to that item.
+9. Confirming the ticket saves the ticket, items, and allocations atomically.
+10. Balances and reports are calculated from confirmed tickets.
 
-```text
-item_discounted_price = item_price - (item_price / ticket_subtotal) * ticket_discount_total
-```
+### Core features
 
----
-
-## Product scope
-
-The business source of truth is `documentation/speckit-specify-prompt.md`.
-
-### Required capabilities
-
-- Receipt capture through image/PDF upload.
-- OCR draft extraction using OpenAI `gpt-4o` vision.
-- Editable receipt review before persistence.
-- Ticket payer selection.
-- Per-item allocation to one or more active family members.
-- “Select all members” shortcut for shared items.
-- Live per-member cost summary before confirmation.
-- Proportional discount handling.
-- Atomic ticket, item, and allocation save on confirmation.
-- Pairwise net balance tracking with optional date filters.
-- Reports for:
-  - total cost per family member;
-  - itemized consumption by member;
-  - category spending breakdown.
-- Family member management with soft deactivation.
-- Category management with deletion blocked while referenced.
-- Authentication via two pre-created users; no registration.
-- Internationalized UI in English, Russian, and Portuguese.
-
-### Main domain entities
-
-- **Ticket**: shopping trip/receipt with date, store, payer, total, discount, and optional raw image URL.
-- **Item**: receipt line item with original price, computed discounted price, category, and display position.
-- **Allocation**: item-to-family-member join; cost per member is the discounted item price divided by allocation count.
-- **FamilyMember**: person who can pay for or consume items; deactivation is soft-delete only.
-- **Category**: editable spending category with a display color.
+- **Authentication**: two environment-provisioned users, no registration flow.
+- **Receipt capture**: JPEG, PNG, WEBP, and PDF uploads up to 10 MB.
+- **OCR draft review**: extracted receipt data is editable before persistence.
+- **Per-item allocation**: allocate each item to one or more active family members.
+- **Discount handling**: proportional discount allocation using euro-cent precision.
+- **Balance tracking**: pairwise net balances such as “Alice owes Bob €23.50”.
+- **Reports**:
+  - total cost per member for a date range;
+  - itemized consumed items for a selected member;
+  - category breakdown as chart/table.
+- **Family member management**: add, rename, deactivate; historical records are preserved.
+- **Category management**: add, rename, delete; deletion is blocked when items reference a category.
+- **Internationalized UI**: English, Russian, and Portuguese locales.
 
 ---
 
-## Repository parts
+## Repository structure
 
 ```text
 .
-├── .claude/skills/                 # Local Spec Kit skill instructions
-├── .specify/                       # Spec Kit templates, scripts, workflows, and constitution
-├── agents/                         # Specialist agent prompts
-├── documentation/                  # Product/constitution source prompts
-├── CLAUDE.md                       # Workspace instruction pointer
-├── install-brainstorm.sh           # Brainstorm MCP installer
-└── README.md                       # This file
+├── backend/                         # FastAPI REST API
+│   ├── app/
+│   │   ├── models/                  # SQLAlchemy ORM models
+│   │   ├── repositories/            # Data access layer
+│   │   ├── routers/                 # FastAPI HTTP endpoints
+│   │   ├── schemas/                 # Pydantic request/response schemas
+│   │   ├── services/                # Business logic
+│   │   ├── config.py                # Environment-based settings
+│   │   ├── database.py              # Async SQLAlchemy session setup
+│   │   └── main.py                  # FastAPI app and router registration
+│   ├── alembic/                     # Database migrations and seed data
+│   ├── tests/                       # Backend pytest suite
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── requirements-dev.txt
+├── frontend/                        # React SPA
+│   ├── src/
+│   │   ├── api/                     # Axios + TanStack Query API hooks
+│   │   ├── components/              # UI components
+│   │   ├── locales/                 # en / ru / pt translations
+│   │   ├── pages/                   # Application pages/routes
+│   │   ├── App.tsx                  # Route definitions
+│   │   └── i18n.ts                  # i18next setup
+│   ├── tests/                       # Vitest + React Testing Library + MSW tests
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── package.json
+├── specs/001-portuguese-drunk-sailors/
+│   ├── spec.md                      # Product specification
+│   ├── plan.md                      # Architecture and implementation plan
+│   ├── quickstart.md                # Setup/validation notes
+│   ├── data-model.md                # Domain model and DB rules
+│   ├── contracts/api.md             # API contract
+│   └── tasks.md                     # Implementation task plan
+├── agents/                          # Specialist agent prompts used during implementation
+├── project-administrator/           # Agent/task metrics tooling
+├── docker-compose.yml               # db + backend + frontend orchestration
+└── .env.example                     # Required environment variables
 ```
-
-### `documentation/`
-
-Contains high-level prompt inputs:
-
-- `documentation/speckit-specify-prompt.md` — business/product requirements.
-- `documentation/speckit-constitution-prompt.md` — governance principles used to create the constitution.
-
-### `.specify/`
-
-Contains Spec Kit workflow assets:
-
-- constitution memory;
-- feature/spec/plan/task templates;
-- workflow registry;
-- bash and PowerShell helper scripts;
-- Git integration extension files.
-
-### `.claude/skills/`
-
-Contains local skill definitions for Spec Kit workflows such as:
-
-- specification generation;
-- clarification;
-- planning;
-- task generation;
-- implementation execution;
-- checklist/analyze flows;
-- Git helper workflows.
-
-### `agents/`
-
-Contains specialist prompts for coordinated AI-agent work:
-
-- `product-manager.md`
-- `software-architect.md`
-- `security-architect.md`
-- `backend-developer-python.md`
-- `frontend-developer-react.md`
-- `devops.md`
-- `autotester.md`
-- `code-reviewer.md`
-- `project-administrator.md`
-
-These agents are aligned to `documentation/speckit-specify-prompt.md` and should treat it as the business source of truth.
-
-### `install-brainstorm.sh`
-
-Installs Brainstorm MCP from `https://github.com/TheodorStorm/brainstorm-mcp.git`, builds it with npm, registers it with Claude Code, and optionally adds a shell wrapper.
 
 ---
 
-## Intended application architecture
+## Application parts
 
-The constitution and product requirements define the intended implementation stack. The runnable source is not currently tracked in `HEAD`, but future/restored implementation should follow these constraints.
+### Backend API
+
+The backend is a FastAPI application with a layered architecture:
+
+- **Routers** handle HTTP only.
+- **Services** contain business logic, including authentication, OCR, discount calculation, allocation validation, balances, and reports.
+- **Repositories** encapsulate database access.
+- **Schemas** define Pydantic request/response contracts.
+- **Models** define SQLAlchemy ORM tables.
+- **Alembic migrations** create schema and seed default categories/users.
+
+Main API areas:
+
+- `POST /auth/login`
+- `/members`
+- `/categories`
+- `/tickets` and `/tickets/upload`
+- `/items/{id}` and `/items/{id}/allocations`
+- `/balances`
+- `/reports/summary`
+- `/reports/itemized`
+- `/reports/categories`
+- `GET /health`
+
+Backend API docs are available at `http://localhost:8000/docs` when the backend is running.
+
+### Frontend SPA
+
+The frontend is a Vite React application with protected routes:
+
+- `/login` — login form
+- `/` — dashboard
+- `/tickets` — ticket list and filters
+- `/tickets/new` — receipt upload/review/allocation/confirmation wizard
+- `/tickets/:id` — ticket detail/edit page
+- `/members` — family member management
+- `/categories` — category management
+- `/reports` — summary, itemized, and category reports
+- `/balances` — pairwise net balances
+
+The UI uses the Portuguese flag-inspired palette and supports EN/RU/PT localization.
+
+### Database
+
+PostgreSQL stores:
+
+- application users;
+- family members;
+- categories;
+- tickets;
+- ticket items;
+- item allocations.
+
+Money is stored as `NUMERIC(10,2)`. Backend monetary calculations use Python `Decimal` rather than floats.
+
+### Docker deployment
+
+`docker-compose.yml` runs three services:
+
+- `db`: PostgreSQL 16
+- `backend`: FastAPI on port `8000`
+- `frontend`: nginx-served React build on port `3000`
+
+The backend container runs Alembic migrations before starting the API server.
+
+---
+
+## Technologies used
 
 ### Backend
 
 - Python 3.12
 - FastAPI
+- Uvicorn
 - SQLAlchemy 2.x async
 - asyncpg
 - Alembic
 - PostgreSQL 16
-- PyJWT using RS256
-- bcrypt password hashing
+- PyJWT with RS256 keys
+- bcrypt / passlib
 - OpenAI Python SDK v1.x
-- `gpt-4o` vision OCR
-- `pdf2image` for PDF first-page conversion
-- Python `Decimal` for all monetary arithmetic
-- `NUMERIC(10,2)` for stored money values
-- pytest, pytest-asyncio, httpx, pytest-cov with at least 80% backend coverage
+- `gpt-4o` vision for OCR
+- `pdf2image` + Poppler for PDF first-page conversion
+- Pillow
+- python-magic for upload MIME validation
+- pytest, pytest-asyncio, httpx, pytest-cov
 
 ### Frontend
 
 - React 18
 - TypeScript strict mode
+- Vite
 - Tailwind CSS
 - HeroUI
+- React Router
+- Axios
 - TanStack Query v5
 - React Hook Form
 - Zod
-- i18next with EN/RU/PT locales
+- i18next / react-i18next
+- Recharts
 - Vitest
 - React Testing Library
 - MSW
 
-### Infrastructure
+### Infrastructure and tooling
 
-- Docker Compose with at least:
-  - PostgreSQL database service;
-  - FastAPI backend service;
-  - React/nginx frontend service.
-- Alembic migrations should run automatically on backend startup.
-- CORS must be locked to the configured frontend origin.
-- Environment variables must be the single source of runtime configuration.
+- Docker Compose
+- nginx for serving the frontend production build
+- Alembic migrations on backend startup
+- Backend formatting/lint configuration via Black, isort, mypy, and flake8 settings
 
 ---
 
-## Governance rules
+## Prerequisites
 
-The project constitution lives at `.specify/memory/constitution.md`.
+For the Docker-based flow:
 
-Key non-negotiable rules:
+- Docker Desktop, or Docker Engine with the Compose plugin
+- An OpenAI API key with access to `gpt-4o`
 
-- No floats for money.
-- Backend database access must be async.
-- Business logic belongs in services, not routers, schemas, or models.
-- All routes except login require JWT authentication.
-- JWT must be RS256.
-- Uploads must be validated before processing.
-- OCR calls must be mocked in tests.
-- All user-facing frontend text must be internationalized.
-- Docker Compose should be the one-command runtime path once app source is present.
+For local development without Docker:
 
----
-
-## How to use this repository now
-
-### 1. Review the product requirements
-
-```zsh
-cat documentation/speckit-specify-prompt.md
-```
-
-### 2. Review the constitution
-
-```zsh
-cat .specify/memory/constitution.md
-```
-
-### 3. Review specialist agents
-
-```zsh
-ls agents
-```
-
-### 4. Install Brainstorm MCP support
-
-```zsh
-bash install-brainstorm.sh
-```
-
-Optional custom install location:
-
-```zsh
-bash install-brainstorm.sh --dir "$HOME/.local/share/brainstorm-mcp"
-```
-
-### 5. Use Spec Kit workflows
-
-The repository includes local Spec Kit skills under `.claude/skills/` and templates under `.specify/`. Typical workflow intent:
-
-1. Specify the feature from `documentation/speckit-specify-prompt.md`.
-2. Clarify underspecified requirements.
-3. Produce an implementation plan.
-4. Generate tasks.
-5. Implement through specialist agents.
-6. Analyze consistency.
-7. Commit validated changes.
-
-Exact invocation depends on the host assistant/tooling environment.
+- Python 3.12
+- Node.js 20+
+- npm
+- PostgreSQL 16, or another database URL compatible with the backend configuration
+- Poppler installed locally if testing PDF OCR conversion outside Docker
 
 ---
 
-## Testing and validation
+## Configuration
 
-Because the runnable app source and Docker Compose files are no longer tracked in current `HEAD`, application-level commands such as backend pytest, frontend Vitest, and `docker compose up --build` are not currently available from the tracked repository alone.
-
-### Current repository validation
-
-You can still validate shell syntax and inspect Git state:
+Create a local environment file from the example:
 
 ```zsh
-bash -n install-brainstorm.sh
-git status --short
-git diff --name-status d3622e8..HEAD
+cp .env.example .env
 ```
 
-### Intended application validation once source is restored
+Required groups of variables:
 
-When backend/frontend/Docker source is restored or regenerated, the expected validation commands are:
+- PostgreSQL connection settings
+- RS256 JWT private/public keys
+- two pre-created app users
+- OpenAI API key
+- upload settings
+- CORS/frontend URLs
+
+Generate a JWT key pair:
 
 ```zsh
-# Backend coverage gate
+openssl genrsa -out private.pem 2048
+openssl rsa -in private.pem -pubout -out public.pem
+```
+
+Collapse keys into `\n`-escaped one-line values before pasting them into `.env`:
+
+```zsh
+awk 'NR==1{printf "%s", $0; next} {printf "\\n%s", $0} END{print ""}' private.pem
+awk 'NR==1{printf "%s", $0; next} {printf "\\n%s", $0} END{print ""}' public.pem
+```
+
+Typical local values are shown in `.env.example`.
+
+> Do not commit `.env`, generated private keys, credentials files, uploads, or database volumes.
+
+---
+
+## How to run
+
+### Docker Compose
+
+From the repository root:
+
+```zsh
+docker compose up --build
+```
+
+Then open:
+
+- Frontend: `http://localhost:3000`
+- Backend API docs: `http://localhost:8000/docs`
+- Backend health check: `http://localhost:8000/health`
+
+Log in using the credentials configured in `.env`:
+
+- `APP_USER_1_USERNAME` / `APP_USER_1_PASSWORD`, or
+- `APP_USER_2_USERNAME` / `APP_USER_2_PASSWORD`
+
+Stop services:
+
+```zsh
+docker compose down
+```
+
+Stop services and remove the database volume:
+
+```zsh
+docker compose down -v
+```
+
+### Local backend development
+
+```zsh
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+alembic upgrade head
+uvicorn app.main:app --reload --port 8000
+```
+
+If running the backend locally, ensure `DATABASE_URL` points to a reachable PostgreSQL instance and required environment variables are available.
+
+### Local frontend development
+
+In another terminal:
+
+```zsh
+cd frontend
+npm install
+npm run dev
+```
+
+The Vite dev server is configured to run on `http://localhost:3000`. The Docker setup also exposes the production frontend on `http://localhost:3000`.
+
+---
+
+## How to use the app
+
+1. Open the frontend.
+2. Log in with one of the configured users.
+3. Create or review family members on `/members`.
+4. Create or review spending categories on `/categories`.
+5. Go to `/tickets/new`.
+6. Upload a receipt image or PDF.
+7. Review and correct the OCR draft.
+8. Select the payer.
+9. Allocate every item to one or more active family members.
+10. Check the live summary and confirm the ticket.
+11. Use `/balances` to see who owes whom.
+12. Use `/reports` to inspect spending by member, item, and category.
+
+---
+
+## Testing
+
+### Backend tests
+
+Run the backend suite with coverage:
+
+```zsh
 cd backend
 pytest --cov=app --cov-fail-under=80
 ```
 
+Or through Docker Compose:
+
 ```zsh
-# Frontend tests
+docker compose run --rm backend pytest --cov=app --cov-fail-under=80
+```
+
+The backend tests cover authentication, members, categories, OCR service behavior, tickets, items, balances, and reports. OCR calls are mocked in tests; the suite should not call the real OpenAI API.
+
+### Frontend tests
+
+Run the frontend test suite:
+
+```zsh
 cd frontend
+npm install
 npm test
 ```
 
+Or through Docker Compose:
+
 ```zsh
-# Frontend build/type check
+docker compose run --rm frontend npx vitest run
+```
+
+Frontend tests use Vitest, React Testing Library, and MSW API mocks.
+
+### Frontend build/type check
+
+```zsh
 cd frontend
 npm run build
 ```
 
+### Docker configuration check
+
 ```zsh
-# Full stack startup
-cd /path/to/portuguese-expenses
-docker compose up --build
+docker compose config
 ```
 
-Expected runtime checks after full app source exists:
+### Suggested manual smoke test
 
-- login works for the two pre-created users;
-- invalid/oversized uploads are rejected;
-- OCR drafts are editable before save;
-- item allocation and proportional discounts are correct;
-- balances show pairwise net debts;
-- reports filter correctly by date range;
-- EN/RU/PT locales render without missing translation keys.
+After `docker compose up --build`:
+
+- `/login` loads.
+- EN/RU/PT language switcher works.
+- Valid login redirects to the dashboard.
+- Protected routes redirect to `/login` without a token.
+- Upload rejects invalid files and oversized files.
+- A valid receipt upload returns an editable draft.
+- Ticket allocation updates the per-member summary.
+- Confirmed tickets appear in the ticket list.
+- Balances show net pairwise debts.
+- Reports filter by date range.
 
 ---
 
-## Deployment notes
+## Deployment
 
-There is no deployable tracked application in current `HEAD` because the backend, frontend, Dockerfiles, and Compose file from the earlier implementation snapshot were removed after `d3622e8`.
+The simplest deployment target is a Linux host or container platform that can run Docker Compose.
 
-Once the app source is restored or regenerated, the intended deployment model is:
+### Basic deployment flow
 
-1. Prepare a production `.env` from a safe `.env.example`.
-2. Generate production RS256 JWT keys.
-3. Set strong PostgreSQL credentials.
-4. Set `OPENAI_API_KEY` for OCR.
-5. Set `FRONTEND_URL` and `VITE_API_BASE_URL` to production origins.
-6. Start via Docker Compose:
+1. Provision a host with Docker and Docker Compose.
+2. Copy or clone this repository to the host.
+3. Create a production `.env` from `.env.example`.
+4. Use strong PostgreSQL credentials.
+5. Generate production RS256 JWT keys.
+6. Set `FRONTEND_URL` to the public frontend origin.
+7. Set `VITE_API_BASE_URL` to the public backend API URL before building the frontend image.
+8. Set `OPENAI_API_KEY` for receipt OCR.
+9. Start the stack:
 
    ```zsh
    docker compose up --build -d
    ```
 
-7. Put TLS termination in front of frontend/backend services.
-8. Back up PostgreSQL and uploaded receipt storage.
-9. Keep secrets outside Git.
+10. Verify:
+
+   ```zsh
+   docker compose ps
+   docker compose logs backend
+   docker compose logs frontend
+   ```
+
+### Production notes
+
+- Put TLS termination in front of the frontend/backend, for example with a reverse proxy or managed load balancer.
+- Keep `.env` and private keys outside version control.
+- Back up the PostgreSQL volume regularly.
+- Consider mapping uploads to durable object storage or a persistent host volume.
+- Rotate JWT keys and user passwords according to your operational policy.
+- Keep `FRONTEND_URL` restrictive; do not use wildcard CORS origins.
 
 ---
 
-## Future work
+## Design and implementation notes
 
-### Repository hygiene
+- Business requirements live in `documentation/speckit-specify-prompt.md` and `specs/001-portuguese-drunk-sailors/spec.md`.
+- The architecture plan is in `specs/001-portuguese-drunk-sailors/plan.md`.
+- API behavior is documented in `specs/001-portuguese-drunk-sailors/contracts/api.md`.
+- Database/domain rules are documented in `specs/001-portuguese-drunk-sailors/data-model.md`.
+- The implementation uses RS256 JWTs. Older draft references to HS256 are superseded by the project plan/constitution notes.
+- The product is intentionally scoped for a small trusted household, not multi-tenant SaaS.
 
-- Decide whether the runnable app source removed after `d3622e8` should be restored, regenerated, or intentionally kept out of this repository.
-- Reintroduce `.gitignore` rules for `.env`, `private/`, credentials, SQLite databases, `node_modules/`, build outputs, uploads, and Python caches.
-- Recreate `.env.example` without real secrets.
-- Avoid committing generated artifacts such as `frontend/dist/`, `frontend/node_modules/`, `.pytest_cache/`, `.coverage`, and `__pycache__/`.
-- Add CI for documentation checks, shell syntax, and eventually backend/frontend tests once source returns.
+---
 
-### Product features
+## Future ideas
 
-- Settlement tracking: mark debts as paid and keep settlement history.
-- Manual ticket entry for receipts without OCR.
-- OCR confidence indicators and field-level review warnings.
-- Export balances/reports to CSV or PDF.
-- Mobile-first receipt capture improvements.
-- Durable object storage for receipt files.
-- Observability: structured logs, request IDs, metrics, and OCR latency tracking.
-- Backup/restore automation for PostgreSQL.
-- Optional role distinctions if admin/editor permissions are needed later.
+Potential improvements for future iterations:
+
+- **Settlement tracking**: mark debts as paid and keep a settlement history.
+- **Recurring households/trips**: support multiple groups, trips, or households.
+- **Receipt image storage upgrade**: move raw uploads from filesystem volume to S3-compatible object storage.
+- **Manual ticket entry**: allow creating a ticket without OCR when a receipt is unavailable.
+- **OCR confidence UI**: show low-confidence extracted fields and highlight likely OCR mistakes.
+- **Better rounding reconciliation**: expose cent-level rounding adjustments for complex shared receipts.
+- **Export tools**: CSV/PDF export for balances, reports, and itemized consumption.
+- **Notification workflow**: send settlement summaries by email, Telegram, or WhatsApp.
+- **Mobile UX polish**: optimize the ticket wizard for camera upload on phones.
+- **Observability**: add structured logs, request IDs, metrics, and OCR latency tracking.
+- **CI pipeline**: run backend tests, frontend tests, frontend build, and Docker config validation on every pull request.
+- **Backup/restore scripts**: automate PostgreSQL backups and restore verification.
+- **Role-based permissions**: add admin/editor distinctions if the household workflow needs them later.
 
 ---
 
 ## Quick command reference
 
 ```zsh
-# Check current Git changes since the previous app snapshot
-git diff --name-status d3622e8..HEAD
+# Start everything
+docker compose up --build
 
-# Validate installer shell syntax
-bash -n install-brainstorm.sh
+# Stop everything
+docker compose down
 
-# Install Brainstorm MCP support
-bash install-brainstorm.sh
+# Stop and remove DB/uploads volumes managed by compose
+docker compose down -v
 
-# Review product requirements
-cat documentation/speckit-specify-prompt.md
+# Backend tests
+cd backend
+pytest --cov=app --cov-fail-under=80
 
-# Review constitution
-cat .specify/memory/constitution.md
+# Frontend tests
+cd frontend
+npm test
 
-# List specialist agents
-ls agents
+# Frontend build
+cd frontend
+npm run build
+
+# Validate Compose file
+docker compose config
 ```
+
 

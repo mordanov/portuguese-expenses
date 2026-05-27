@@ -1,0 +1,25 @@
+from datetime import datetime, timezone
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.repositories.balance_repository import BalanceRepository
+from app.schemas.balance import BalanceEntry, BalanceResponse, MemberRefResponse
+
+
+class BalanceService:
+    def __init__(self, session: AsyncSession) -> None:
+        self.repo = BalanceRepository(session)
+
+    async def get_balances(
+        self, from_date: datetime | None = None, to_date: datetime | None = None
+    ) -> BalanceResponse:
+        rows = await self.repo.get_pairwise_balances(from_date=from_date, to_date=to_date)
+        entries = [
+            BalanceEntry(
+                debtor=MemberRefResponse(id=row["debtor_id"], name=row["debtor_name"]),
+                creditor=MemberRefResponse(id=row["creditor_id"], name=row["creditor_name"]),
+                amount=str(row["amount"]),
+            )
+            for row in rows
+        ]
+        return BalanceResponse(balances=entries, as_of=datetime.now(timezone.utc))

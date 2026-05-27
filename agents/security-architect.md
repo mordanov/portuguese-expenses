@@ -1,3 +1,6 @@
+---
+model: bedrock/anthropic.claude-sonnet-4-6
+---
 # Security Architect Agent
 
 ## Mission

@@ -1,0 +1,60 @@
+import uuid
+from datetime import date
+
+from pydantic import BaseModel
+
+
+class MemberRefResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+
+
+class CategoryRefResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+    color: str
+
+
+class MemberSummary(BaseModel):
+    member: MemberRefResponse
+    total: str
+
+
+class SummaryResponse(BaseModel):
+    from_date: date
+    to_date: date
+    members: list[MemberSummary]
+
+
+class ItemizedItem(BaseModel):
+    name: str
+    discounted_price: str
+    member_cost: str
+
+
+class ItemizedTicket(BaseModel):
+    ticket: dict
+    items: list[ItemizedItem]
+    ticket_total_for_member: str
+
+
+class ItemizedResponse(BaseModel):
+    member: MemberRefResponse
+    from_date: date
+    to_date: date
+    tickets: list[ItemizedTicket]
+    grand_total: str
+
+
+class CategoryBreakdown(BaseModel):
+    category: CategoryRefResponse
+    total: str
+    percentage: str
+
+
+class CategoryReportResponse(BaseModel):
+    from_date: date
+    to_date: date
+    total: str
+    categories: list[CategoryBreakdown]
+    uncategorized: str

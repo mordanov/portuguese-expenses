@@ -1,0 +1,49 @@
+import uuid
+
+from fastapi import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.category import Category
+from app.repositories.category_repository import CategoryRepository
+
+
+class CategoryReferencedError(Exception):
+    pass
+
+
+class CategoryService:
+    def __init__(self, session: AsyncSession) -> None:
+        self.repo = CategoryRepository(session)
+
+    async def list_categories(self, page: int = 1, page_size: int = 20) -> tuple[list[Category], int]:
+        return await self.repo.list_all(page=page, page_size=page_size)
+
+    async def create_category(self, name: str, color: str) -> Category:
+        existing = await self.repo.get_by_name(name)
+        if existing:
+            raise HTTPException(status_code=409, detail="Category name already exists")
+        category = Category(name=name, color=color)
+        return await self.repo.create(category)
+
+    async def update_category(self, id: uuid.UUID, name: str | None, color: str | None) -> Category:
+        category = await self.repo.get_by_id(id)
+        if not category:
+            raise HTTPException(status_code=404, detail="Category not found")
+        if name is not None:
+            existing = await self.repo.get_by_name(name)
+            if existing and existing.id != id:
+                raise HTTPException(status_code=409, detail="Category name already exists")
+            category.name = name
+        if color is not None:
+            category.color = color
+        await self.repo.session.flush()
+        await self.repo.session.refresh(category)
+        return category
+
+    async def delete_category(self, id: uuid.UUID) -> None:
+        category = await self.repo.get_by_id(id)
+        if not category:
+            raise HTTPException(status_code=404, detail="Category not found")
+        if await self.repo.has_items(id):
+            raise CategoryReferencedError(f"Category {id} is referenced by items")
+        await self.repo.delete(category)

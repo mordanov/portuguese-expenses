@@ -1,0 +1,9 @@
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.app_user import AppUser
+
+
+async def get_user_by_username(session: AsyncSession, username: str) -> AppUser | None:
+    result = await session.execute(select(AppUser).where(AppUser.username == username))
+    return result.scalar_one_or_none()
