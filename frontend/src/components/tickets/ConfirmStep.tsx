@@ -32,10 +32,15 @@ export default function ConfirmStep({ reviewData, allocations }: ConfirmStepProp
   })
 
   async function handleConfirm() {
+    const totalCents = reviewData.items.reduce(
+      (sum, item) => sum + Math.round(parseFloat(item.price || '0') * 100),
+      0,
+    )
     const payload = {
       store_name: reviewData.store_name,
       purchased_at: reviewData.purchased_at,
       paid_by_id: reviewData.paid_by_id,
+      total_price: (totalCents / 100).toFixed(2),
       discount_total: reviewData.discount_total,
       items: reviewData.items.map((item, idx) => ({
         name: item.name,

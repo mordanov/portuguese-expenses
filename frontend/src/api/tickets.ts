@@ -20,8 +20,9 @@ export interface TicketItem {
   name: string
   price: string
   discounted_price: string
-  category_id: string | null
-  member_ids: string[]
+  position: number
+  category: { id: string; name: string; color: string } | null
+  allocated_members: { id: string; name: string; cost: string }[]
 }
 
 export interface Ticket {
@@ -46,6 +47,7 @@ export interface TicketCreateRequest {
   store_name: string
   purchased_at: string
   paid_by_id: string
+  total_price: string
   discount_total: string
   items: Array<{
     name: string
@@ -118,5 +120,31 @@ export function useDeleteTicket() {
       await apiClient.delete(`/tickets/${id}`)
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['tickets'] }) },
+  })
+}
+
+export function useUpdateItem(ticketId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ itemId, name, price, categoryId }: { itemId: string; name?: string; price?: string; categoryId?: string | null }) => {
+      const response = await apiClient.put<TicketItem>(`/items/${itemId}`, {
+        name,
+        price,
+        category_id: categoryId,
+      })
+      return response.data
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['tickets', ticketId] }) },
+  })
+}
+
+export function useReplaceAllocations(ticketId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ itemId, memberIds }: { itemId: string; memberIds: string[] }) => {
+      const response = await apiClient.put(`/items/${itemId}/allocations`, { member_ids: memberIds })
+      return response.data
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['tickets', ticketId] }) },
   })
 }
