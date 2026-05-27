@@ -1,0 +1,48 @@
+import uuid
+from datetime import datetime
+
+from pydantic import BaseModel, field_validator
+
+
+class CategoryBase(BaseModel):
+    name: str
+    color: str
+
+    @field_validator("color")
+    @classmethod
+    def validate_color(cls, v: str) -> str:
+        if not (v.startswith("#") and len(v) == 7):
+            raise ValueError("Color must be a 7-character hex string starting with #")
+        return v
+
+
+class CategoryCreate(CategoryBase):
+    pass
+
+
+class CategoryUpdate(BaseModel):
+    name: str | None = None
+    color: str | None = None
+
+    @field_validator("color")
+    @classmethod
+    def validate_color(cls, v: str | None) -> str | None:
+        if v is not None and not (v.startswith("#") and len(v) == 7):
+            raise ValueError("Color must be a 7-character hex string starting with #")
+        return v
+
+
+class CategoryResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+    color: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class CategoryListResponse(BaseModel):
+    items: list[CategoryResponse]
+    total: int
+    page: int
+    page_size: int

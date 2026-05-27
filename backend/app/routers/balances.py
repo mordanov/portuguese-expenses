@@ -1,0 +1,22 @@
+from datetime import datetime
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import get_async_session
+from app.dependencies import get_current_user
+from app.schemas.balance import BalanceResponse
+from app.services.balance_service import BalanceService
+
+router = APIRouter(prefix="/balances", tags=["balances"])
+
+
+@router.get("", response_model=BalanceResponse)
+async def get_balances(
+    from_date: datetime | None = None,
+    to_date: datetime | None = None,
+    session: AsyncSession = Depends(get_async_session),
+    _: str = Depends(get_current_user),
+) -> BalanceResponse:
+    service = BalanceService(session)
+    return await service.get_balances(from_date=from_date, to_date=to_date)

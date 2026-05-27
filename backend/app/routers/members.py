@@ -1,0 +1,65 @@
+import uuid
+
+from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import get_async_session
+from app.dependencies import get_current_user
+from app.schemas.member import MemberCreate, MemberListResponse, MemberResponse, MemberUpdate
+from app.services.member_service import MemberService
+
+router = APIRouter(prefix="/members", tags=["members"])
+
+
+@router.get("", response_model=MemberListResponse)
+async def list_members(
+    active_only: bool = False,
+    page: int = 1,
+    page_size: int = Query(default=20, ge=1, le=100),
+    session: AsyncSession = Depends(get_async_session),
+    _: str = Depends(get_current_user),
+) -> MemberListResponse:
+    service = MemberService(session)
+    members, total = await service.list_members(active_only=active_only, page=page, page_size=page_size)
+    return MemberListResponse(
+        items=[MemberResponse.model_validate(m) for m in members],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@router.post("", response_model=MemberResponse, status_code=status.HTTP_201_CREATED)
+async def create_member(
+    body: MemberCreate,
+    session: AsyncSession = Depends(get_async_session),
+    _: str = Depends(get_current_user),
+) -> MemberResponse:
+    service = MemberService(session)
+    member = await service.create_member(body.name)
+    await session.commit()
+    return MemberResponse.model_validate(member)
+
+
+@router.put("/{member_id}", response_model=MemberResponse)
+async def update_member(
+    member_id: uuid.UUID,
+    body: MemberUpdate,
+    session: AsyncSession = Depends(get_async_session),
+    _: str = Depends(get_current_user),
+) -> MemberResponse:
+    service = MemberService(session)
+    member = await service.update_member(member_id, body.name, body.is_active)
+    await session.commit()
+    return MemberResponse.model_validate(member)
+
+
+@router.delete("/{member_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_member(
+    member_id: uuid.UUID,
+    session: AsyncSession = Depends(get_async_session),
+    _: str = Depends(get_current_user),
+) -> None:
+    service = MemberService(session)
+    await service.deactivate_member(member_id)
+    await session.commit()
