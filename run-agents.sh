@@ -167,17 +167,29 @@ STEP 2 – Join the shared project as the reporting contributor:
     role: "contributor"
   (If the project doesn't exist yet, wait 5 seconds and retry up to 3 times.)
 
-STEP 3 – Announce yourself:
-  Send a message to the "$project" channel:
-    "Hi team! I'm the Project Administrator. I will collect task metrics, reconcile missing fields, and publish the human-facing HTML report."
+STEP 3 – Create the shared project and join it:
+  Call mcp__brainstorm__create_project with:
+    project_id: "$project"
+    name: "$project"
+    description: "Nine-agent collaboration: product manager + software architect + security architect + frontend + backend + devops + code reviewer + autotester + project administrator"
+    created_by: "$role"
+  Then call mcp__brainstorm__join_project with:
+    project_id: "$project"
+    agent_name: "$role"
 
-STEP 4 – Broadcast the reporting contract:
+STEP 4 – Signal that you are ready:
+  Broadcast a message to the "$project" channel with payload:
+    { "type": "pa-ready", "message": "Project Administrator is online. Metrics DB initialised. Reporting contract active. All other agents may now start." }
+  Use reply_expected: false.
+  This is the gate signal. Other agents will not launch until this message is sent.
+
+STEP 5 – Broadcast the reporting contract:
   Tell the team that every completed task must follow this handshake:
     1. Run ../scripts/report-task-metrics.sh with feature, task, time, tokens, and model.
     2. Send a brainstorm message to project-administrator with payload type "task-metrics" and the same fields.
     3. Only then announce the task as complete.
 
-STEP 5 – Collect and reconcile:
+STEP 6 – Collect and reconcile:
   • Poll mcp__brainstorm__receive_messages periodically
   • Ask each agent to submit a record after every completed task
   • Acknowledge valid submissions so the agent knows the reporting debt is cleared
@@ -185,7 +197,7 @@ STEP 5 – Collect and reconcile:
   • Verify the SQLite database contains: timestamp, agent name, feature name, short task description, time spent, tokens spent, and model used
   • If a value is missing or uncertain, request a correction rather than inventing it
 
-STEP 6 – Report for humans:
+STEP 7 – Report for humans:
   • Run python agent_metrics.py summary for a quick check
   • Run python agent_metrics.py report-html to generate the final HTML report
   • Share the report path and a short factual summary with the human
@@ -209,19 +221,16 @@ $mission
 STEP 1 – Initialise your Brainstorm session:
   Call mcp__brainstorm__status with working_directory set to your current working directory.
 
-STEP 2 – Create and join the shared project as coordinator:
-  Call mcp__brainstorm__create_project with:
-    project_id: "$project"
-    name: "$project"
-    description: "Nine-agent collaboration demo (product manager + software architect + security architect + frontend + backend + devops + code reviewer + autotester + project administrator)"
-  Then call mcp__brainstorm__join_project with:
+STEP 2 – Join the shared project as coordinator:
+  The project has already been created by project-administrator.
+  Call mcp__brainstorm__join_project with:
     project_id: "$project"
     agent_name: "$role"
-    role: "coordinator"
+    capabilities: ["coordination", "product-management", "scope", "priorities", "acceptance-criteria"]
 
 STEP 3 – Announce yourself:
   Send a message to the "$project" channel:
-    "Hi team! I'm the $display_role agent. Project '$project' is initialised. Waiting for the rest of the team to join."
+    "Hi team! I'm the $display_role agent (coordinator). I will drive the workflow, assign tasks, and relay human approvals."
 
 STEP 4 – Wait for the rest of the team to join, then:
   • Poll mcp__brainstorm__receive_messages periodically
@@ -378,10 +387,56 @@ launch_role() {
 }
 
 launch_role "project-administrator" "false" 1 9
-sleep 5   # give the reporting agent time to initialise before the team starts
+
+echo ""
+echo "  Waiting for project-administrator to signal ready (pa-ready)..."
+echo "  (PA must initialise the DB, create the project, and broadcast pa-ready)"
+echo ""
+
+# Poll the Brainstorm project for the pa-ready message.
+# We use the brainstorm MCP CLI wrapper if available; otherwise fall back to
+# a plain time-based wait so the script still works without the CLI tool.
+PA_READY=false
+WAIT_SECONDS=0
+MAX_WAIT=300   # 5 minutes hard limit
+
+while [[ "$PA_READY" == "false" && $WAIT_SECONDS -lt $MAX_WAIT ]]; do
+  sleep 5
+  WAIT_SECONDS=$((WAIT_SECONDS + 5))
+
+  # Check for the pa-ready signal file written by a helper, or just check
+  # whether the project exists and has messages via the brainstorm CLI.
+  if command -v npx &>/dev/null; then
+    # Try to detect the signal via the brainstorm MCP messages endpoint.
+    # The project-administrator broadcasts payload.type == "pa-ready".
+    SIGNAL=$(npx --prefix ~/.local/share/brainstorm-mcp brainstorm-messages \
+               "$PROJECT_NAME" 2>/dev/null \
+             | grep -c '"pa-ready"' 2>/dev/null || echo "0")
+    if [[ "$SIGNAL" -gt 0 ]]; then
+      PA_READY=true
+    fi
+  else
+    # No CLI available — fall back to a fixed wait after which we assume PA is up.
+    if [[ $WAIT_SECONDS -ge 30 ]]; then
+      echo "  (brainstorm CLI not found; assuming PA ready after ${WAIT_SECONDS}s)"
+      PA_READY=true
+    fi
+  fi
+
+  if [[ "$PA_READY" == "false" ]]; then
+    echo "  Still waiting for pa-ready... (${WAIT_SECONDS}s elapsed)"
+  fi
+done
+
+if [[ "$PA_READY" == "false" ]]; then
+  echo "WARNING: pa-ready signal not detected after ${MAX_WAIT}s. Launching rest of team anyway." >&2
+fi
+
+echo "  ✅  project-administrator is ready. Launching the rest of the team..."
+echo ""
 
 launch_role "product-manager" "true" 2 9
-sleep 1   # small stagger so the coordinator creates the project first
+sleep 1   # small stagger so the coordinator joins before contributors
 
 launch_role "software-architect" "false" 3 9
 sleep 1
@@ -406,7 +461,8 @@ launch_role "autotester" "false" 9 9
 echo ""
 echo "✅  All nine agents launched!"
 echo ""
-echo "  • product-manager (coordinator) creates the project and drives the workflow"
+echo "  • project-admin  (first) creates the project, signals pa-ready, then collects metrics"
+echo "  • product-manager (coordinator) joins after pa-ready and drives the workflow"
 echo "  • software-architect (contributor) shapes architecture and system boundaries"
 echo "  • security-architect (contributor) supervises security and threat prevention"
 echo "  • frontend       (contributor) builds the UI"
