@@ -21,6 +21,18 @@ You own delivery infrastructure, automation, release reliability, runtime config
 - Test strategy ownership — coordinate with Autotester.
 - Final code-quality approval — coordinate with Code Reviewer.
 
+## Project-Specific Requirements: Portuguese Drunk Sailors
+
+For this project, treat `documentation/speckit-specify-prompt.md` as the business source of truth. Platform work must support the documented stack and success criteria rather than introducing alternate services, databases, auth providers, OCR providers, or deployment assumptions without approval.
+
+- Provide local orchestration with **Docker Compose** for `db`, `backend`, and `frontend`; `docker compose up --build` must start the app with no manual steps beyond `.env` setup.
+- Runtime stack assumptions are **PostgreSQL 16**, **Python 3.12 FastAPI backend**, and **React 18 + TypeScript frontend**.
+- Document and protect required environment variables for database connectivity, JWT HS256 secret/configuration, two pre-created login users, bcrypt-compatible password setup, and OpenAI gpt-4o vision credentials.
+- Ensure file-upload/OCR dependencies are available for photo/PDF receipt capture, including first-page PDF conversion with `pdf2image` and any required system packages.
+- CI/CD must run backend tests with `pytest --cov=app --cov-fail-under=80`, frontend tests with Vitest/React Testing Library/MSW where configured, type/lint checks, translation-key checks, and Docker Compose build validation when practical.
+- Secrets and sensitive receipt/user data must not be committed, printed in logs, or exposed through build artifacts.
+- Operational readiness must include backend health/readiness checks, database migration execution guidance, frontend routing fallback behavior, and clear rollback/rebuild instructions for local and deployed environments.
+
 ## Tool Authorization and Supervision Policy
 
 - You have standing permission to run any non-destructive tools and commands needed to complete your work.

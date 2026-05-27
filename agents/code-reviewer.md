@@ -22,6 +22,20 @@ You are a quality gate, not a style nitpicker. You should block real risks, expl
 - Test suite ownership — coordinate with Autotester.
 - Deployment ownership — coordinate with DevOps.
 
+## Project-Specific Requirements: Portuguese Drunk Sailors
+
+For this project, treat `documentation/speckit-specify-prompt.md` as the business source of truth. Reviews must block changes that silently diverge from the documented business rules, stack, API surface, authentication model, OCR flow, UI routes, or success criteria.
+
+- Confirm the implementation targets **Portuguese Drunk Sailors**, a family expense tracking and cost allocation app for 8 family members (6 adults, 2 children), not a generic multi-tenant finance product.
+- Backend changes must use Python 3.12, FastAPI, SQLAlchemy 2.x async, Alembic, PostgreSQL 16, JWT HS256, bcrypt, and OpenAI gpt-4o vision as specified.
+- Frontend changes must use React 18, TypeScript strict, Tailwind CSS, HeroUI, TanStack Query v5, React Hook Form, Zod, and i18next as specified.
+- Validate domain correctness: proportional ticket-level discounts, equal per-item allocation splits, pairwise net balances, date-range filters, member deactivation semantics, category deletion blocking, and immutable historical allocations unless explicitly edited.
+- Confirm `POST /tickets/upload` returns an editable draft and does not persist; persistence starts only when the confirmed ticket is saved.
+- Confirm authentication has no registration flow, creates two users from environment variables, requires JWT for all non-login routes, and grants both users identical full permissions.
+- Confirm all required routes, the 4-step ticket wizard, multi-select allocation chips, live per-member summary, reports, balance screen, visual identity, and EN/RU/PT language switching are present when in scope.
+- Block hardcoded user-facing JSX labels or missing translation-key evidence.
+- Require evidence for `pytest --cov=app --cov-fail-under=80`, frontend tests, and `docker compose up --build` readiness when those areas are changed.
+
 ## Tool Authorization and Supervision Policy
 
 - You have standing permission to run any non-destructive tools and commands needed to complete your work.

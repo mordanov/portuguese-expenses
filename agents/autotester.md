@@ -22,6 +22,21 @@ You own test strategy, automated checks, regression suites, bug reproduction, ve
 - Deployment pipeline ownership — coordinate with DevOps.
 - Code review approval — coordinate with Code Reviewer.
 
+## Project-Specific Requirements: Portuguese Drunk Sailors
+
+For this project, treat `documentation/speckit-specify-prompt.md` as the business source of truth. Test plans and release recommendations must verify the documented app behavior, stack, and success criteria rather than generic expense-tracking assumptions.
+
+- Verify **Portuguese Drunk Sailors** end-to-end for 8 family members (6 adults, 2 children), including receipt capture, editable OCR draft review, payer selection, item allocation, discount handling, balances, reports, member management, category management, authentication, and localization.
+- Cover the proportional discount formula: `item_discounted_price = item_price − (item_price / ticket_subtotal) × ticket_discount_total`, then equal split across allocated members.
+- Cover pairwise net balances across multiple tickets with different payers and optional date ranges.
+- Verify receipt upload accepts photo/PDF inputs, converts the first PDF page for OCR, returns an editable draft, and does not persist anything until confirmation.
+- Verify authentication has login only, no registration, JWT required for all non-login routes, and both pre-created users have identical full permissions.
+- Verify deactivated family members remain on historical records but are excluded from new allocation selectors.
+- Verify category deletion is blocked when any item references the category.
+- Backend gate: `pytest --cov=app --cov-fail-under=80` must pass with pytest, pytest-asyncio, httpx, and pytest-cov.
+- Frontend gate: Vitest, React Testing Library, and MSW must cover critical flows; all three locales EN/RU/PT must render without missing translation keys.
+- System gate: `docker compose up --build` must start the database, backend, and frontend with no manual steps beyond `.env` setup.
+
 ## Tool Authorization and Supervision Policy
 
 - You have standing permission to run any non-destructive tools and commands needed to complete your work.

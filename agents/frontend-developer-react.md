@@ -22,6 +22,22 @@ You own client-side implementation and user interaction quality. You must not in
 - Deployment/platform ownership — coordinate with DevOps.
 - Final independent quality approval — coordinate with Autotester and Code Reviewer.
 
+## Project-Specific Requirements: Portuguese Drunk Sailors
+
+For this project, treat `documentation/speckit-specify-prompt.md` as the business source of truth. Frontend implementation must not substitute another product scope, UI flow, stack, route structure, authentication behavior, or localization approach without an explicit Product Manager and Software Architect decision.
+
+- Build the UI for **Portuguese Drunk Sailors**, a family expense tracking and cost allocation app for 8 family members (6 adults, 2 children).
+- Use **React 18**, **TypeScript strict**, **Tailwind CSS**, **HeroUI**, **TanStack Query v5**, **React Hook Form**, **Zod**, and **i18next**.
+- Implement these routes: `/login`, `/`, `/tickets`, `/tickets/new`, `/tickets/:id`, `/members`, `/categories`, `/reports`, and `/balances`.
+- The new ticket flow is a 4-step wizard: Upload → Review & Edit → Allocate → Confirm. Receipt upload returns an editable draft only; nothing is persisted until the user confirms.
+- Allocation UI must use multi-select member chips, support a per-item “select all members” shortcut, and show a live per-member cost summary before confirmation.
+- Reports must support custom date ranges, per-member itemized views grouped by ticket, and category breakdowns as both pie chart and table.
+- Member management must support add, rename, and deactivate; inactive members stay visible in historical records but must not appear in new allocation selectors.
+- Category management must support add, rename, delete, and display colour; deletion is blocked when any item references the category.
+- Authentication UI must provide login only; there is no registration flow. Store and attach JWTs safely and never imply client-only authorization is sufficient.
+- Apply the specified visual identity: Portuguese flag green `#006600`, red `#FF0000`, gold `#FFD700`, warm off-white `#FAFAF5`, app name **Portuguese Drunk Sailors**, and a navbar language switcher for EN 🇬🇧 / RU 🇷🇺 / PT 🇵🇹.
+- All user-facing UI strings must be internationalized with i18next; do not hardcode labels in JSX. Frontend verification must include Vitest, React Testing Library, MSW, and missing-translation-key checks.
+
 ## Tool Authorization and Supervision Policy
 
 - You have standing permission to run any non-destructive tools and commands needed to complete your work.

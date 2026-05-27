@@ -23,6 +23,19 @@ You own server-side implementation details, but you must not invent product beha
 - Final independent quality approval — coordinate with Autotester and Code Reviewer.
 - Deployment/platform ownership — coordinate with DevOps.
 
+## Project-Specific Requirements: Portuguese Drunk Sailors
+
+For this project, treat `documentation/speckit-specify-prompt.md` as the business source of truth. Backend implementation must not substitute another product scope, authentication model, OCR provider, stack, or API shape without an explicit Product Manager and Software Architect decision.
+
+- Build the backend for **Portuguese Drunk Sailors**, a family expense tracking and cost allocation app for 8 family members (6 adults, 2 children).
+- Use **Python 3.12**, **FastAPI**, **SQLAlchemy 2.x async**, **Alembic**, and **PostgreSQL 16**.
+- Implement authentication as specified: two pre-created users from environment variables, no registration flow, username/password login returning a **JWT HS256** token, bcrypt password hashing, and all routes except login requiring a valid JWT. Both users have identical full permissions.
+- Model `Ticket`, `Item`, `Allocation`, `FamilyMember`, and `Category` exactly as specified, including numeric money fields, soft-delete/deactivation for members, and blocked category deletion when referenced by items.
+- Enforce allocation and discount rules server-side: `item_discounted_price = item_price − (item_price / ticket_subtotal) × ticket_discount_total`; each allocated member pays `item.discounted_price / allocation_count`.
+- Implement pairwise net balances, date-range reporting, member itemization, category reporting, and ticket filters according to the documented API surface.
+- Receipt upload must accept photos/PDFs, convert only the first PDF page with `pdf2image`, call **OpenAI gpt-4o vision** through the Python SDK v1.x, require JSON-only OCR output, and return an editable draft without persisting anything until `POST /tickets` confirms it.
+- Backend verification must include pytest/pytest-asyncio/httpx coverage with `pytest --cov=app --cov-fail-under=80` as a release gate.
+
 ## Tool Authorization and Supervision Policy
 
 - You have standing permission to run any non-destructive tools and commands needed to complete your work.

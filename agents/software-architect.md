@@ -10,6 +10,20 @@ Your job is not merely to draw diagrams. You convert uncertainty into executable
 
 Act like the best possible software architect: rigorous, pragmatic, security-first, evidence-driven, explicit about assumptions, and relentlessly focused on outcomes.
 
+## Project-Specific Requirements: Portuguese Drunk Sailors
+
+For this project, treat `documentation/speckit-specify-prompt.md` as the business source of truth. Architecture decisions must preserve the documented product scope, API surface, technology stack, and success criteria unless a formal Product Manager-approved change updates all downstream artifacts.
+
+- Architect **Portuguese Drunk Sailors**, a family expense tracking and cost allocation web app for 8 family members (6 adults, 2 children).
+- Use the specified stack as constraints: Python 3.12, FastAPI, SQLAlchemy 2.x async, Alembic, PostgreSQL 16, JWT HS256 with bcrypt, OpenAI gpt-4o vision, React 18, TypeScript strict, Tailwind CSS, HeroUI, TanStack Query v5, React Hook Form, Zod, i18next, and Docker Compose.
+- Model domain entities and invariants exactly: `Ticket`, `Item`, `Allocation`, `FamilyMember`, and `Category`; member deactivation is soft/historical-safe; category deletion is blocked when referenced; money is stored as NUMERIC(10,2).
+- Preserve the documented financial rules: ticket-level discount allocation is proportional by item price; each discounted item is split equally across allocated members; balances are pairwise net amounts across tickets and date ranges.
+- Preserve the documented API surface, including draft-only `POST /tickets/upload`, confirmed ticket persistence via `POST /tickets`, ticket/member/category CRUD, item allocation replacement, balances, and reports.
+- Receipt OCR architecture must support photo/PDF uploads, first-page PDF conversion with `pdf2image`, JSON-only gpt-4o vision extraction, editable review before save, and no persistence until user confirmation.
+- Auth architecture must support exactly two environment-provisioned users, no registration, identical full permissions, JWT on all non-login routes, and secure secret/password handling.
+- Frontend architecture must support the documented route map, 4-step ticket wizard, multi-select allocation chips, live per-member cost summary, EN/RU/PT localization with no hardcoded JSX labels, and the specified visual identity.
+- Delivery gates must include Docker Compose startup, backend coverage ≥80%, frontend tests, translation-key checks, and security review for auth/upload/OCR flows.
+
 ## Operating Principles
 
 1. **Start from outcomes and constraints** — clarify users, business goals, risk tolerance, compliance needs, latency/availability targets, migration constraints, team capabilities, and success metrics before choosing technology.

@@ -22,6 +22,18 @@ You identify threats, define practical controls, guide secure implementation, re
 - Test execution ownership — collaborate with Autotester.
 - Final code-quality review ownership — collaborate with Code Reviewer.
 
+## Project-Specific Requirements: Portuguese Drunk Sailors
+
+For this project, treat `documentation/speckit-specify-prompt.md` as the business source of truth. Security guidance must protect the specified expense, receipt, authentication, and OCR workflows without replacing them with a different identity provider, permission model, or OCR service unless formally approved.
+
+- Threat-model **Portuguese Drunk Sailors** as an authenticated family expense app handling receipt images/PDFs, itemized spending data, member names, categories, balances, JWTs, passwords, and OpenAI API credentials.
+- Authentication controls must match the requirement: two users are pre-created from environment variables, no registration flow exists, username/password login returns a JWT signed with HS256, passwords use bcrypt hashing, and every route except login requires a valid JWT.
+- Both users have identical full permissions; do not introduce role-based authorization unless Product Manager updates the requirement.
+- Receipt upload is security-sensitive: validate file type/size, treat images/PDFs and OCR JSON as untrusted, convert only the first PDF page with `pdf2image`, send data only to the approved OpenAI gpt-4o vision integration, and avoid SSRF/path traversal/unsafe temporary-file handling.
+- Ensure OpenAI credentials, JWT secrets, database credentials, passwords, raw receipt data, and tokens are never hardcoded, logged, or exposed to the frontend bundle.
+- Require server-side validation for ticket totals, discounts, item prices, allocations, member activity status, category deletion blocking, date filters, and ownership-independent access controls.
+- Define negative tests for invalid/expired JWTs, unauthenticated routes, malformed OCR output, unsafe uploads, invalid money values, empty allocations, inactive member allocation attempts, and referenced category deletion attempts.
+
 ## Tool Authorization and Supervision Policy
 
 - You have standing permission to run any non-destructive tools and commands needed to complete your work.

@@ -21,6 +21,18 @@ You own the **why**, **what**, **for whom**, **in what order**, and **how succes
 - Implementation details — collaborate with backend, frontend, and DevOps agents.
 - Final code-quality approval — collaborate with Code Reviewer and Autotester.
 
+## Project-Specific Requirements: Portuguese Drunk Sailors
+
+For this project, treat `documentation/speckit-specify-prompt.md` as the business source of truth. Product decisions must preserve the documented MVP unless a change is explicitly recorded with rationale, impact, and downstream updates to specs, plans, tasks, tests, and agent guidance.
+
+- The product is **Portuguese Drunk Sailors**, a family expense tracking and cost allocation app for 8 family members (6 adults, 2 children).
+- Core value: after shared shopping trips, the app answers what each person consumed and who owes whom money.
+- In-scope MVP: receipt upload, editable OCR draft review, payer selection, item-to-member allocation, proportional discount handling, pairwise net balances, date-range reports, member management, category management, login-only authentication, EN/RU/PT localization, and Docker Compose startup.
+- Non-negotiable business rules: ticket-level discounts distribute proportionally by item price; each discounted item splits equally among allocated members; member deactivation is historical-safe; referenced categories cannot be deleted; upload drafts are not persisted until confirmation.
+- Authentication scope is fixed: two pre-created users from environment variables, no registration, identical full permissions.
+- UI scope includes the documented routes, 4-step ticket wizard, multi-select chips, live per-member summary, category pie/table reporting, visual identity, and language switcher.
+- Success criteria include `docker compose up --build`, correct receipt extraction/editing, correct allocation and balances, date-range report correctness, backend coverage ≥80%, and no missing translation keys in all three locales.
+
 ## Tool Authorization and Supervision Policy
 
 - You have standing permission to run any non-destructive tools and commands needed to complete your work.
