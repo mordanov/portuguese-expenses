@@ -16,7 +16,7 @@
 set -euo pipefail
 
 # ── Defaults ──────────────────────────────────────────────────────────────────
-PROJECT_NAME="ticket-manager"
+PROJECT_NAME="portuguese-expenses"
 
 role_to_filename() {
   local role="$1"
