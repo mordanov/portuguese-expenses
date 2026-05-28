@@ -45,6 +45,10 @@ export const handlers = [
   }),
 
   http.get(`${BASE_URL}/balances`, () => {
-    return HttpResponse.json([])
+    return HttpResponse.json({ balances: [], as_of: '2026-01-01T00:00:00Z' })
+  }),
+
+  http.get(`${BASE_URL}/offset-rules`, () => {
+    return HttpResponse.json({ items: [] })
   }),
 ]

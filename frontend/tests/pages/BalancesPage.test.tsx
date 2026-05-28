@@ -32,23 +32,29 @@ describe('BalancesPage', () => {
   it('renders balance rows with €X.XX format', async () => {
     server.use(
       http.get(`${BASE_URL}/balances`, () =>
-        HttpResponse.json([
-          { debtor_id: 'member-1', debtor_name: 'Alice', creditor_id: 'member-2', creditor_name: 'Bob', amount: '20.00' },
-        ]),
+        HttpResponse.json({
+          balances: [
+            { debtor: { id: 'member-1', name: 'Alice' }, creditor: { id: 'member-2', name: 'Bob' }, amount: '20.00' },
+          ],
+          as_of: '2026-01-01T00:00:00Z',
+        }),
       ),
     )
     renderBalances()
-    await waitFor(() => expect(screen.getByText('Alice')).toBeInTheDocument())
-    expect(screen.getByText('Bob')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getAllByText('Alice').length).toBeGreaterThan(0))
+    expect(screen.getAllByText('Bob').length).toBeGreaterThan(0)
     expect(screen.getByText('€20.00')).toBeInTheDocument()
   })
 
   it('MoneyDisplay shows correct euro format', async () => {
     server.use(
       http.get(`${BASE_URL}/balances`, () =>
-        HttpResponse.json([
-          { debtor_id: 'm1', debtor_name: 'X', creditor_id: 'm2', creditor_name: 'Y', amount: '7.50' },
-        ]),
+        HttpResponse.json({
+          balances: [
+            { debtor: { id: 'm1', name: 'X' }, creditor: { id: 'm2', name: 'Y' }, amount: '7.50' },
+          ],
+          as_of: '2026-01-01T00:00:00Z',
+        }),
       ),
     )
     renderBalances()
