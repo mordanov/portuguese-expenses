@@ -1,0 +1,76 @@
+import uuid
+from datetime import datetime
+from decimal import Decimal
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.payment import Payment
+
+
+class PaymentRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def create(
+        self,
+        payer_id: uuid.UUID,
+        payee_id: uuid.UUID,
+        amount: Decimal,
+        note: str | None = None,
+    ) -> Payment:
+        payment = Payment(payer_id=payer_id, payee_id=payee_id, amount=amount, note=note)
+        self.session.add(payment)
+        await self.session.flush()
+        await self.session.refresh(payment)
+        return payment
+
+    async def get_pairwise_totals(
+        self,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None,
+    ) -> list[dict]:
+        """Return sum of payments per (payer_id, payee_id) pair within the date range."""
+        from sqlalchemy import func as sqlfunc
+
+        stmt = select(
+            Payment.payer_id,
+            Payment.payee_id,
+            sqlfunc.sum(Payment.amount).label("total"),
+        ).group_by(Payment.payer_id, Payment.payee_id)
+
+        if from_date:
+            stmt = stmt.where(Payment.paid_at >= from_date)
+        if to_date:
+            stmt = stmt.where(Payment.paid_at <= to_date)
+
+        result = await self.session.execute(stmt)
+        return [
+            {"payer_id": row.payer_id, "payee_id": row.payee_id, "total": Decimal(str(row.total))}
+            for row in result.all()
+        ]
+
+    async def list_in_range(
+        self,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None,
+    ) -> list[Payment]:
+        stmt = select(Payment).order_by(Payment.paid_at.desc())
+        if from_date:
+            stmt = stmt.where(Payment.paid_at >= from_date)
+        if to_date:
+            stmt = stmt.where(Payment.paid_at <= to_date)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def list_by_pair(self, member_a: uuid.UUID, member_b: uuid.UUID) -> list[Payment]:
+        stmt = (
+            select(Payment)
+            .where(
+                ((Payment.payer_id == member_a) & (Payment.payee_id == member_b))
+                | ((Payment.payer_id == member_b) & (Payment.payee_id == member_a))
+            )
+            .order_by(Payment.paid_at.desc())
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

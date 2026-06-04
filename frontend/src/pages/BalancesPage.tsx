@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useBalances, type BalanceRow } from '../api/balances'
 import { useMembers, type Member } from '../api/members'
 import { useOffsetRules, useCreateOffsetRule, useDeleteOffsetRule, type OffsetRuleRecord } from '../api/offsetRules'
+import { useRecordPayment } from '../api/payments'
 import BalanceRow_ from '../components/balances/BalanceRow'
 import DateRangePicker from '../components/shared/DateRangePicker'
 
@@ -120,6 +121,14 @@ export default function BalancesPage() {
   // Draft rules being built in the UI (not yet saved — id is null)
   const [drafts, setDrafts] = useState<DraftRule[]>([])
 
+  // Payment modal state
+  const [paymentTarget, setPaymentTarget] = useState<BalanceRow | null>(null)
+  const [paymentAmount, setPaymentAmount] = useState('')
+  const [paymentNote, setPaymentNote] = useState('')
+  const [paymentError, setPaymentError] = useState('')
+  const recordPayment = useRecordPayment()
+  const amountInputRef = useRef<HTMLInputElement>(null)
+
   const { data: balances, isLoading } = useBalances({
     date_from: dateFrom || undefined,
     date_to: dateTo || undefined,
@@ -162,6 +171,39 @@ export default function BalancesPage() {
 
   function removeSaved(id: string) {
     deleteRule.mutate(id)
+  }
+
+  function openPaymentModal(balance: BalanceRow) {
+    setPaymentTarget(balance)
+    setPaymentAmount(balance.amount)
+    setPaymentNote('')
+    setPaymentError('')
+    setTimeout(() => amountInputRef.current?.select(), 50)
+  }
+
+  function closePaymentModal() {
+    setPaymentTarget(null)
+    setPaymentAmount('')
+    setPaymentNote('')
+    setPaymentError('')
+  }
+
+  function submitPayment() {
+    if (!paymentTarget) return
+    const amt = parseFloat(paymentAmount)
+    if (!paymentAmount || isNaN(amt) || amt <= 0) {
+      setPaymentError(t('balances.payment.amountPositive'))
+      return
+    }
+    recordPayment.mutate(
+      {
+        payer_id: paymentTarget.debtor_id,
+        payee_id: paymentTarget.creditor_id,
+        amount: amt.toFixed(2),
+        note: paymentNote || undefined,
+      },
+      { onSuccess: closePaymentModal },
+    )
   }
 
   const activeRules = allRules.filter((r) => r.personA && r.personB && r.personA !== r.personB)
@@ -360,9 +402,66 @@ export default function BalancesPage() {
 
       <div className="space-y-3">
         {filtered.map((balance, idx) => (
-          <BalanceRow_ key={idx} balance={balance} />
+          <BalanceRow_ key={idx} balance={balance} onRecordPayment={openPaymentModal} />
         ))}
       </div>
+
+      {/* Payment modal */}
+      {paymentTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <h2 className="text-lg font-bold text-gray-800 mb-1">{t('balances.payment.modalTitle')}</h2>
+            <p className="text-sm text-gray-500 mb-5">
+              <span className="font-semibold">{paymentTarget.debtor_name}</span>
+              {' → '}
+              <span className="font-semibold">{paymentTarget.creditor_name}</span>
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">{t('balances.payment.amountLabel')}</label>
+                <input
+                  ref={amountInputRef}
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={paymentAmount}
+                  onChange={(e) => { setPaymentAmount(e.target.value); setPaymentError('') }}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
+                />
+                {paymentError && <p className="text-xs text-red-500 mt-1">{paymentError}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">{t('balances.payment.noteLabel')}</label>
+                <input
+                  type="text"
+                  placeholder={t('balances.payment.notePlaceholder')}
+                  value={paymentNote}
+                  onChange={(e) => setPaymentNote(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={closePaymentModal}
+                className="flex-1 border border-gray-300 text-gray-600 rounded-lg py-2 text-sm hover:bg-gray-50 transition-colors"
+              >
+                {t('balances.payment.cancel')}
+              </button>
+              <button
+                onClick={submitPayment}
+                disabled={recordPayment.isPending}
+                className="flex-1 bg-pt-green text-white rounded-lg py-2 text-sm font-medium hover:bg-green-800 transition-colors disabled:opacity-60"
+              >
+                {recordPayment.isPending ? t('balances.payment.submitting') : t('balances.payment.submit')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

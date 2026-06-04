@@ -58,3 +58,21 @@ class CategoryReportResponse(BaseModel):
     total: str
     categories: list[CategoryBreakdown]
     uncategorized: str
+
+
+class PaymentReportItem(BaseModel):
+    id: uuid.UUID
+    payer_id: uuid.UUID
+    payer_name: str
+    payee_id: uuid.UUID
+    payee_name: str
+    amount: str
+    paid_at: str
+    note: str | None
+
+
+class PaymentsReportResponse(BaseModel):
+    from_date: date
+    to_date: date
+    payments: list[PaymentReportItem]
+    total: str

@@ -152,6 +152,19 @@
       "removeRule": "Remove rule",
       "rulesApplied_one": "{{count}} rule applied",
       "rulesApplied_other": "{{count}} rules applied"
+    },
+    "payment": {
+      "recordButton": "Record Payment",
+      "modalTitle": "Record Payment",
+      "amountLabel": "Amount (€)",
+      "noteLabel": "Note (optional)",
+      "notePlaceholder": "e.g. bank transfer",
+      "submit": "Save",
+      "submitting": "Saving…",
+      "cancel": "Cancel",
+      "success": "Payment recorded",
+      "amountRequired": "Amount is required",
+      "amountPositive": "Amount must be greater than 0"
     }
   },
   "reports": {
@@ -176,6 +189,16 @@
     "itemized": {
       "selectMember": "Select a member",
       "empty": "No items for selected member and period."
+    },
+    "payments": {
+      "tab": "Payments",
+      "date": "Date",
+      "from": "From",
+      "to": "To",
+      "amount": "Amount",
+      "note": "Note",
+      "total": "Total repaid",
+      "empty": "No payments for selected period."
     },
     "dateFrom": "From",
     "dateTo": "To",

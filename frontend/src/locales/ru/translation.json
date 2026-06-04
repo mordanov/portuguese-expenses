@@ -154,6 +154,19 @@
       "rulesApplied_few": "{{count}} правила применено",
       "rulesApplied_many": "{{count}} правил применено",
       "rulesApplied_other": "{{count}} правил применено"
+    },
+    "payment": {
+      "recordButton": "Внести платёж",
+      "modalTitle": "Внести платёж",
+      "amountLabel": "Сумма (€)",
+      "noteLabel": "Примечание (необязательно)",
+      "notePlaceholder": "например, банковский перевод",
+      "submit": "Сохранить",
+      "submitting": "Сохранение…",
+      "cancel": "Отмена",
+      "success": "Платёж зафиксирован",
+      "amountRequired": "Сумма обязательна",
+      "amountPositive": "Сумма должна быть больше нуля"
     }
   },
   "reports": {
@@ -178,6 +191,16 @@
     "itemized": {
       "selectMember": "Выберите участника",
       "empty": "Нет позиций для выбранного участника и периода."
+    },
+    "payments": {
+      "tab": "Платежи",
+      "date": "Дата",
+      "from": "От кого",
+      "to": "Кому",
+      "amount": "Сумма",
+      "note": "Примечание",
+      "total": "Итого погашено",
+      "empty": "Платежей за выбранный период нет."
     },
     "dateFrom": "С",
     "dateTo": "По",

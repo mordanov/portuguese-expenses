@@ -152,6 +152,19 @@
       "removeRule": "Remover regra",
       "rulesApplied_one": "{{count}} regra aplicada",
       "rulesApplied_other": "{{count}} regras aplicadas"
+    },
+    "payment": {
+      "recordButton": "Registar Pagamento",
+      "modalTitle": "Registar Pagamento",
+      "amountLabel": "Valor (€)",
+      "noteLabel": "Nota (opcional)",
+      "notePlaceholder": "ex. transferência bancária",
+      "submit": "Guardar",
+      "submitting": "A guardar…",
+      "cancel": "Cancelar",
+      "success": "Pagamento registado",
+      "amountRequired": "O valor é obrigatório",
+      "amountPositive": "O valor deve ser maior que 0"
     }
   },
   "reports": {
@@ -176,6 +189,16 @@
     "itemized": {
       "selectMember": "Seleccionar membro",
       "empty": "Sem itens para o membro e período seleccionados."
+    },
+    "payments": {
+      "tab": "Pagamentos",
+      "date": "Data",
+      "from": "De",
+      "to": "Para",
+      "amount": "Valor",
+      "note": "Nota",
+      "total": "Total reembolsado",
+      "empty": "Sem pagamentos para o período seleccionado."
     },
     "dateFrom": "De",
     "dateTo": "Até",

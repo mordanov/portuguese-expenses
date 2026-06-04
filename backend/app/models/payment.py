@@ -1,0 +1,30 @@
+import uuid
+from datetime import datetime
+
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Numeric, String, func
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.models.base import Base
+
+
+class Payment(Base):
+    __tablename__ = "payments"
+    __table_args__ = (
+        CheckConstraint("amount > 0", name="ck_payment_amount_positive"),
+        CheckConstraint("payer_id != payee_id", name="ck_payment_different_members"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    payer_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("family_members.id", ondelete="CASCADE"), nullable=False
+    )
+    payee_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("family_members.id", ondelete="CASCADE"), nullable=False
+    )
+    amount: Mapped[object] = mapped_column(Numeric(10, 2), nullable=False)
+    paid_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    note: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    payer: Mapped["FamilyMember"] = relationship("FamilyMember", foreign_keys=[payer_id])  # noqa: F821
+    payee: Mapped["FamilyMember"] = relationship("FamilyMember", foreign_keys=[payee_id])  # noqa: F821

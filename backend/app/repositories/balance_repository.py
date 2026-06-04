@@ -1,13 +1,14 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import select, func, text
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.allocation import Allocation
 from app.models.family_member import FamilyMember
 from app.models.item import Item
 from app.models.ticket import Ticket
+from app.repositories.payment_repository import PaymentRepository
 
 
 class BalanceRepository:
@@ -54,6 +55,16 @@ class BalanceRepository:
             key = (row.creditor_id, row.debtor_id)
             cost = Decimal(str(row.discounted_price)) / Decimal(str(row.cnt))
             gross[key] = gross.get(key, Decimal("0")) + cost
+
+        # Subtract payments: a payment from debtor→creditor reduces what debtor owes creditor.
+        # gross key is (creditor_id, debtor_id); a payment where payer=debtor, payee=creditor
+        # reduces gross[(creditor, debtor)] — i.e. adds to the reverse direction.
+        payment_repo = PaymentRepository(self.session)
+        payment_rows = await payment_repo.get_pairwise_totals(from_date=from_date, to_date=to_date)
+        for pr in payment_rows:
+            # payer paid payee → reduces what payer owes payee, i.e. gross[(payee, payer)]
+            key = (pr["payee_id"], pr["payer_id"])
+            gross[key] = gross.get(key, Decimal("0")) - pr["total"]
 
         # Net: balance(A→B) = gross(A→B) - gross(B→A)
         seen: set[tuple] = set()

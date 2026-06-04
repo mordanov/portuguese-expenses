@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
 from app.dependencies import get_current_user
-from app.schemas.report import CategoryReportResponse, ItemizedResponse, SummaryResponse
+from app.schemas.report import CategoryReportResponse, ItemizedResponse, PaymentsReportResponse, SummaryResponse
 from app.services.report_service import ReportService
 
 router = APIRouter(prefix="/reports", tags=["reports"])
@@ -44,3 +44,14 @@ async def category_report(
 ) -> CategoryReportResponse:
     service = ReportService(session)
     return await service.get_category_report(from_date=from_date, to_date=to_date)
+
+
+@router.get("/payments", response_model=PaymentsReportResponse)
+async def payments_report(
+    from_date: date,
+    to_date: date,
+    session: AsyncSession = Depends(get_async_session),
+    _: str = Depends(get_current_user),
+) -> PaymentsReportResponse:
+    service = ReportService(session)
+    return await service.get_payments_report(from_date=from_date, to_date=to_date)

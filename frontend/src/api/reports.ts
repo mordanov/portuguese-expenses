@@ -22,6 +22,17 @@ export interface CategoryRow {
   percentage: string
 }
 
+export interface PaymentReportRow {
+  id: string
+  payer_id: string
+  payer_name: string
+  payee_id: string
+  payee_name: string
+  amount: string
+  paid_at: string
+  note: string | null
+}
+
 export function useSummaryReport(params: { from_date: string; to_date: string }) {
   return useQuery({
     queryKey: ['reports', 'summary', params],
@@ -65,6 +76,20 @@ export function useItemizedReport(params: { from_date: string; to_date: string; 
       return rows
     },
     enabled: Boolean(params.from_date && params.to_date && params.member_id),
+  })
+}
+
+export function usePaymentsReport(params: { from_date: string; to_date: string }) {
+  return useQuery({
+    queryKey: ['reports', 'payments', params],
+    queryFn: async () => {
+      const response = await apiClient.get<{
+        payments: PaymentReportRow[]
+        total: string
+      }>('/reports/payments', { params })
+      return { payments: response.data.payments, total: response.data.total }
+    },
+    enabled: Boolean(params.from_date && params.to_date),
   })
 }
 

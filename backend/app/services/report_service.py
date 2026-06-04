@@ -5,6 +5,7 @@ from decimal import Decimal
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.member_repository import MemberRepository
+from app.repositories.payment_repository import PaymentRepository
 from app.repositories.report_repository import ReportRepository
 from app.schemas.report import (
     CategoryBreakdown,
@@ -15,6 +16,8 @@ from app.schemas.report import (
     ItemizedTicket,
     MemberRefResponse,
     MemberSummary,
+    PaymentReportItem,
+    PaymentsReportResponse,
     SummaryResponse,
 )
 
@@ -23,6 +26,7 @@ class ReportService:
     def __init__(self, session: AsyncSession) -> None:
         self.repo = ReportRepository(session)
         self.member_repo = MemberRepository(session)
+        self.payment_repo = PaymentRepository(session)
 
     async def get_summary(self, from_date: date, to_date: date) -> SummaryResponse:
         rows = await self.repo.summary_query(from_date=from_date, to_date=to_date)
@@ -112,4 +116,43 @@ class ReportService:
             total=str(overall_total),
             categories=categories,
             uncategorized=str(uncategorized),
+        )
+
+    async def get_payments_report(self, from_date: date, to_date: date) -> PaymentsReportResponse:
+        from datetime import datetime, timezone
+
+        from_dt = datetime(from_date.year, from_date.month, from_date.day, tzinfo=timezone.utc)
+        to_dt = datetime(to_date.year, to_date.month, to_date.day, 23, 59, 59, tzinfo=timezone.utc)
+
+        payments = await self.payment_repo.list_in_range(from_date=from_dt, to_date=to_dt)
+
+        all_member_ids = list({p.payer_id for p in payments} | {p.payee_id for p in payments})
+        names: dict = {}
+        if all_member_ids:
+            from sqlalchemy import select
+            from app.models.family_member import FamilyMember
+            result = await self.payment_repo.session.execute(
+                select(FamilyMember.id, FamilyMember.name).where(FamilyMember.id.in_(all_member_ids))
+            )
+            names = {row.id: row.name for row in result.all()}
+
+        items = [
+            PaymentReportItem(
+                id=p.id,
+                payer_id=p.payer_id,
+                payer_name=names.get(p.payer_id, ""),
+                payee_id=p.payee_id,
+                payee_name=names.get(p.payee_id, ""),
+                amount=str(Decimal(str(p.amount)).quantize(Decimal("0.01"))),
+                paid_at=p.paid_at.isoformat(),
+                note=p.note,
+            )
+            for p in payments
+        ]
+        total = sum((Decimal(i.amount) for i in items), Decimal("0.00"))
+        return PaymentsReportResponse(
+            from_date=from_date,
+            to_date=to_date,
+            payments=items,
+            total=str(total.quantize(Decimal("0.01"))),
         )

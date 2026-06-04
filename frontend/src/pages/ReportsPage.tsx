@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSummaryReport, useItemizedReport, useCategoryReport } from '../api/reports'
+import { useSummaryReport, useItemizedReport, useCategoryReport, usePaymentsReport } from '../api/reports'
 import { useMembers } from '../api/members'
 import SummaryTable from '../components/reports/SummaryTable'
 import CategoryPieChart from '../components/reports/CategoryPieChart'
 import MoneyDisplay from '../components/shared/MoneyDisplay'
 
-type Tab = 'summary' | 'itemized' | 'categories'
+type Tab = 'summary' | 'itemized' | 'categories' | 'payments'
 
 function currentMonthRange() {
   const now = new Date()
@@ -42,9 +42,10 @@ export default function ReportsPage() {
   const { data: summary, isLoading: summaryLoading } = useSummaryReport({ from_date: appliedFrom, to_date: appliedTo })
   const { data: itemized, isLoading: itemizedLoading } = useItemizedReport({ from_date: appliedFrom, to_date: appliedTo, member_id: appliedMember })
   const { data: categories, isLoading: categoriesLoading } = useCategoryReport({ from_date: appliedFrom, to_date: appliedTo })
+  const { data: paymentsData, isLoading: paymentsLoading } = usePaymentsReport({ from_date: appliedFrom, to_date: appliedTo })
 
-  const TABS: Tab[] = ['summary', 'itemized', 'categories']
-  const loading = summaryLoading || itemizedLoading || categoriesLoading
+  const TABS: Tab[] = ['summary', 'itemized', 'categories', 'payments']
+  const loading = summaryLoading || itemizedLoading || categoriesLoading || paymentsLoading
 
   return (
     <div>
@@ -112,7 +113,7 @@ export default function ReportsPage() {
                 : 'bg-white border border-gray-300 text-gray-700 hover:border-pt-green hover:text-pt-green'
             }`}
           >
-            {t(`reports.tabs.${t_}`)}
+            {t_ === 'payments' ? t('reports.payments.tab') : t(`reports.tabs.${t_}`)}
           </button>
         ))}
       </div>
@@ -166,6 +167,42 @@ export default function ReportsPage() {
         (!categories || categories.length === 0)
           ? <p className="text-gray-500 text-center py-8">{t('reports.categories.empty')}</p>
           : <CategoryPieChart rows={categories} />
+      )}
+
+      {!loading && tab === 'payments' && (
+        (!paymentsData || paymentsData.payments.length === 0)
+          ? <p className="text-gray-500 text-center py-8">{t('reports.payments.empty')}</p>
+          : (
+            <div>
+              <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('reports.payments.date')}</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('reports.payments.from')}</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('reports.payments.to')}</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('reports.payments.note')}</th>
+                      <th className="text-right px-4 py-3 text-gray-600 font-medium">{t('reports.payments.amount')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paymentsData.payments.map((p) => (
+                      <tr key={p.id} className="border-t border-gray-100 bg-white">
+                        <td className="px-4 py-3 text-gray-500">{p.paid_at.slice(0, 10)}</td>
+                        <td className="px-4 py-3 font-medium text-gray-800">{p.payer_name}</td>
+                        <td className="px-4 py-3 font-medium text-gray-800">{p.payee_name}</td>
+                        <td className="px-4 py-3 text-gray-400 italic">{p.note ?? '—'}</td>
+                        <td className="px-4 py-3 text-right font-bold text-pt-green">€{parseFloat(p.amount).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-right text-sm font-semibold text-gray-700 mt-3">
+                {t('reports.payments.total')}: <span className="text-pt-green">€{parseFloat(paymentsData.total).toFixed(2)}</span>
+              </p>
+            </div>
+          )
       )}
     </div>
   )
