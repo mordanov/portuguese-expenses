@@ -101,7 +101,7 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 
 @pytest.fixture
 def jwt_token() -> str:
-    payload = {"sub": "testuser", "exp": datetime.now(timezone.utc) + timedelta(hours=1)}
+    payload = {"sub": "testuser", "role": "admin", "exp": datetime.now(timezone.utc) + timedelta(hours=1)}
     return jwt.encode(payload, TEST_PRIVATE_KEY, algorithm="RS256")
 
 
