@@ -110,6 +110,17 @@ def auth_headers(jwt_token: str) -> dict:
     return {"Authorization": f"Bearer {jwt_token}"}
 
 
+@pytest.fixture
+def user_jwt_token() -> str:
+    payload = {"sub": "readonly", "role": "user", "exp": datetime.now(timezone.utc) + timedelta(hours=1)}
+    return jwt.encode(payload, TEST_PRIVATE_KEY, algorithm="RS256")
+
+
+@pytest.fixture
+def user_auth_headers(user_jwt_token: str) -> dict:
+    return {"Authorization": f"Bearer {user_jwt_token}"}
+
+
 @pytest_asyncio.fixture
 async def seeded_user(db_session: AsyncSession) -> AppUser:
     password_hash = bcrypt.hashpw(b"testpass", bcrypt.gensalt()).decode("utf-8")

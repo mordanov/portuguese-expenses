@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useUsers, useCreateUser, useUpdateUser, type AppUser } from '../api/users'
-import { getUserRole } from '../api/auth'
 import { isAxiosError } from 'axios'
 
 type ModalMode = { type: 'add' } | { type: 'edit'; user: AppUser }
@@ -21,8 +20,6 @@ export default function UsersPage() {
 
   const [confirmBlock, setConfirmBlock] = useState<AppUser | null>(null)
 
-  const currentUsername = getUserRole() // we don't store username in localStorage, so we check by checking via API — but
-  // we do know role. For self-demotion protection the backend returns 400, we handle it in form error.
 
   function openAdd() {
     setFormUsername('')
