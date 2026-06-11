@@ -12,6 +12,14 @@ class Settings(BaseSettings):
     # JWT (RS256) — no defaults: missing vars cause startup ValidationError
     jwt_private_key: str
     jwt_public_key: str
+
+    @property
+    def jwt_private_key_parsed(self) -> str:
+        return self.jwt_private_key.replace("\\n", "\n")
+
+    @property
+    def jwt_public_key_parsed(self) -> str:
+        return self.jwt_public_key.replace("\\n", "\n")
     jwt_algorithm: str = "RS256"
     jwt_expire_minutes: int = 60
 
