@@ -18,8 +18,14 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status
+    const detail = error.response?.data?.detail
+    const isAuthFailure =
+      status === 401 ||
+      (status === 403 && detail === 'Not authenticated')
+    if (isAuthFailure) {
       localStorage.removeItem('access_token')
+      localStorage.removeItem('user_role')
       window.location.href = '/login'
     }
     return Promise.reject(error)
