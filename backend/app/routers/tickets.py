@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, require_admin
 from app.schemas.ticket import OCRDraft, TicketCreateRequest, TicketListResponse, TicketResponse
 from app.services.ocr_service import OCRParseError, OCRService, OCRServiceError, UploadValidationError
 from app.services.ticket_service import TicketService
@@ -66,10 +66,9 @@ def get_ocr_service() -> OCRService:
     return OCRService()
 
 
-@router.post("/upload", response_model=OCRDraft)
+@router.post("/upload", response_model=OCRDraft, dependencies=[Depends(require_admin)])
 async def upload_receipt(
     file: UploadFile,
-    _: str = Depends(get_current_user),
     ocr_service: OCRService = Depends(get_ocr_service),
 ) -> OCRDraft:
     try:
@@ -82,11 +81,10 @@ async def upload_receipt(
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin)])
 async def create_ticket(
     body: TicketCreateRequest,
     session: AsyncSession = Depends(get_async_session),
-    _: str = Depends(get_current_user),
 ) -> dict:
     service = TicketService(session)
     ticket = await service.save_ticket(body)
@@ -143,12 +141,11 @@ async def get_ticket(
     return _ticket_to_response(ticket)
 
 
-@router.put("/{ticket_id}")
+@router.put("/{ticket_id}", dependencies=[Depends(require_admin)])
 async def update_ticket(
     ticket_id: uuid.UUID,
     body: dict,
     session: AsyncSession = Depends(get_async_session),
-    _: str = Depends(get_current_user),
 ) -> dict:
     from app.repositories.ticket_repository import TicketRepository
     from app.schemas.ticket import TicketUpdateRequest
@@ -178,12 +175,11 @@ async def update_ticket(
     return _ticket_to_response(ticket)
 
 
-@router.post("/{ticket_id}/items", status_code=status.HTTP_201_CREATED)
+@router.post("/{ticket_id}/items", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin)])
 async def add_item_to_ticket(
     ticket_id: uuid.UUID,
     body: dict,
     session: AsyncSession = Depends(get_async_session),
-    _: str = Depends(get_current_user),
 ) -> dict:
     from app.repositories.item_repository import ItemRepository
     from app.repositories.ticket_repository import TicketRepository
@@ -238,11 +234,10 @@ async def add_item_to_ticket(
     return _item_to_dict(new_item)
 
 
-@router.delete("/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin)])
 async def delete_ticket(
     ticket_id: uuid.UUID,
     session: AsyncSession = Depends(get_async_session),
-    _: str = Depends(get_current_user),
 ) -> None:
     service = TicketService(session)
     await service.delete_ticket(ticket_id)

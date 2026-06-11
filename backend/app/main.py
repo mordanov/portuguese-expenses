@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import auth, balances, categories, health, items, members, offset_rules, payments, reports, tickets
+from app.routers import auth, balances, categories, health, items, members, offset_rules, payments, reports, tickets, users
 
 settings = get_settings()
 
@@ -26,3 +26,4 @@ app.include_router(balances.router)
 app.include_router(offset_rules.router)
 app.include_router(payments.router)
 app.include_router(reports.router)
+app.include_router(users.router)

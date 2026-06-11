@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '../api/categories'
 import { isAxiosError } from 'axios'
+import { isAdmin } from '../api/auth'
 
 const categorySchema = z.object({
   name: z.string().min(1, 'nameRequired'),
@@ -14,6 +15,7 @@ type CategoryFormData = z.infer<typeof categorySchema>
 
 export default function CategoriesPage() {
   const { t } = useTranslation()
+  const admin = isAdmin()
   const { data, isLoading } = useCategories()
   const { mutateAsync: createCategory } = useCreateCategory()
   const { mutateAsync: updateCategory } = useUpdateCategory()
@@ -63,7 +65,7 @@ export default function CategoriesPage() {
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">{t('categories.title')}</h1>
 
-      <form onSubmit={handleSubmit(onAdd)} className="flex gap-3 mb-6 items-end">
+      {admin && <form onSubmit={handleSubmit(onAdd)} className="flex gap-3 mb-6 items-end">
         <div className="flex-1">
           <label className="block text-xs text-gray-500 mb-1">{t('categories.name')}</label>
           <input
@@ -85,8 +87,8 @@ export default function CategoriesPage() {
         >
           {t('categories.add')}
         </button>
-      </form>
-      {addError && <p className="text-red-600 text-xs mb-4">{addError}</p>}
+      </form>}
+      {admin && addError && <p className="text-red-600 text-xs mb-4">{addError}</p>}
       {deleteError && <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4">{deleteError}</p>}
 
       {isLoading && <p className="text-gray-500">{t('common.loading')}</p>}
@@ -117,7 +119,7 @@ export default function CategoriesPage() {
               )}
             </div>
             <div className="flex items-center gap-2">
-              {editId === cat.id ? (
+              {admin && (editId === cat.id ? (
                 <>
                   <button onClick={() => saveEdit(cat.id)} className="text-sm text-pt-green font-medium hover:text-green-800">{t('common.save')}</button>
                   <button onClick={() => setEditId(null)} className="text-sm text-gray-400 hover:text-gray-600">{t('common.cancel')}</button>
@@ -127,7 +129,7 @@ export default function CategoriesPage() {
                   <button onClick={() => { setEditId(cat.id); setEditName(cat.name); setEditColor(cat.color) }} className="text-sm text-gray-500 hover:text-pt-green">{t('categories.edit')}</button>
                   <button onClick={() => handleDelete(cat.id)} className="text-sm text-red-500 hover:text-red-700">{t('categories.delete')}</button>
                 </>
-              )}
+              ))}
             </div>
           </div>
         ))}

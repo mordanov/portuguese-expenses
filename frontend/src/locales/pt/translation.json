@@ -7,6 +7,7 @@
     "categories": "Categorias",
     "reports": "Relatórios",
     "balances": "Saldos",
+    "users": "Utilizadores",
     "logout": "Sair"
   },
   "auth": {
@@ -212,6 +213,35 @@
     "viewAll": "Ver todos",
     "noTickets": "Sem talões.",
     "noBalances": "Tudo liquidado!"
+  },
+  "users": {
+    "title": "Utilizadores",
+    "add": "Adicionar Utilizador",
+    "username": "Utilizador",
+    "role": "Função",
+    "status": "Estado",
+    "active": "Activo",
+    "blocked": "Bloqueado",
+    "block": "Bloquear",
+    "unblock": "Desbloquear",
+    "roleAdmin": "Administrador",
+    "roleUser": "Utilizador",
+    "edit": "Editar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "password": "Palavra-passe",
+    "passwordPlaceholder": "Deixar em branco para manter",
+    "usernamePlaceholder": "Inserir utilizador",
+    "usernameRequired": "O utilizador é obrigatório",
+    "passwordRequired": "A palavra-passe é obrigatória",
+    "usernameConflict": "Utilizador já existe",
+    "empty": "Sem utilizadores.",
+    "editTitle": "Editar Utilizador",
+    "addTitle": "Adicionar Utilizador",
+    "confirmBlock": "Bloquear este utilizador?",
+    "confirmBlockDesc": "Não poderá iniciar sessão.",
+    "selfDemoteError": "Não pode reduzir a sua própria função",
+    "selfBlockError": "Não pode bloquear-se a si próprio"
   },
   "common": {
     "loading": "A carregar…",

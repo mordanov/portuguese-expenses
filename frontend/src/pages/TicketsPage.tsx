@@ -5,9 +5,11 @@ import { useTickets } from '../api/tickets'
 import { useMembers } from '../api/members'
 import MoneyDisplay from '../components/shared/MoneyDisplay'
 import DateRangePicker from '../components/shared/DateRangePicker'
+import { isAdmin } from '../api/auth'
 
 export default function TicketsPage() {
   const { t } = useTranslation()
+  const admin = isAdmin()
   const [page, setPage] = useState(1)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
@@ -30,12 +32,14 @@ export default function TicketsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-800">{t('tickets.title')}</h1>
-        <Link
-          to="/tickets/new"
-          className="px-4 py-2 bg-pt-green text-white rounded-lg hover:bg-green-800 transition-colors font-medium"
-        >
-          + {t('tickets.new')}
-        </Link>
+        {admin && (
+          <Link
+            to="/tickets/new"
+            className="px-4 py-2 bg-pt-green text-white rounded-lg hover:bg-green-800 transition-colors font-medium"
+          >
+            + {t('tickets.new')}
+          </Link>
+        )}
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6 flex flex-wrap gap-4 items-end shadow-sm">

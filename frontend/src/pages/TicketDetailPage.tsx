@@ -5,11 +5,13 @@ import { useTicket, useUpdateTicket, useDeleteTicket, useUpdateItem, useReplaceA
 import { useMembers } from '../api/members'
 import { useCategories } from '../api/categories'
 import MoneyDisplay from '../components/shared/MoneyDisplay'
+import { isAdmin } from '../api/auth'
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const admin = isAdmin()
 
   const { data: ticket, isLoading } = useTicket(id ?? '')
   const { data: membersData } = useMembers({ active_only: true })
@@ -157,40 +159,42 @@ export default function TicketDetailPage() {
           </h1>
           {!editing && <p className="text-gray-500 text-sm">{ticket.purchased_at.slice(0, 10)}</p>}
         </div>
-        <div className="flex gap-2">
-          {editing ? (
-            <>
-              <button
-                onClick={cancelEdit}
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                onClick={saveAll}
-                disabled={savingHeader}
-                className="px-3 py-1.5 text-sm bg-pt-green text-white rounded-lg hover:bg-green-800 transition-colors disabled:opacity-60"
-              >
-                {savingHeader ? t('confirm.saving') : t('common.save')}
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={enterEdit}
-                className="px-3 py-1.5 text-sm border border-pt-green text-pt-green rounded-lg hover:bg-green-50 transition-colors"
-              >
-                {t('tickets.edit')}
-              </button>
-              <button
-                onClick={handleDelete}
-                className="px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
-              >
-                {t('tickets.delete')}
-              </button>
-            </>
-          )}
-        </div>
+        {admin && (
+          <div className="flex gap-2">
+            {editing ? (
+              <>
+                <button
+                  onClick={cancelEdit}
+                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  onClick={saveAll}
+                  disabled={savingHeader}
+                  className="px-3 py-1.5 text-sm bg-pt-green text-white rounded-lg hover:bg-green-800 transition-colors disabled:opacity-60"
+                >
+                  {savingHeader ? t('confirm.saving') : t('common.save')}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={enterEdit}
+                  className="px-3 py-1.5 text-sm border border-pt-green text-pt-green rounded-lg hover:bg-green-50 transition-colors"
+                >
+                  {t('tickets.edit')}
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  {t('tickets.delete')}
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Ticket header fields */}

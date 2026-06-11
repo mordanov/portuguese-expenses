@@ -6,6 +6,7 @@ import { useOffsetRules, useCreateOffsetRule, useDeleteOffsetRule, type OffsetRu
 import { useRecordPayment } from '../api/payments'
 import BalanceRow_ from '../components/balances/BalanceRow'
 import DateRangePicker from '../components/shared/DateRangePicker'
+import { isAdmin } from '../api/auth'
 
 type RuleType = 'absorb' | 'transfer'
 
@@ -113,6 +114,7 @@ function applyOffsets(balances: BalanceRow[], rules: UiRule[], members: Member[]
 
 export default function BalancesPage() {
   const { t } = useTranslation()
+  const admin = isAdmin()
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [debtorId, setDebtorId] = useState('')
@@ -274,20 +276,22 @@ export default function BalancesPage() {
             <p className="text-sm font-medium text-gray-700">{t('balances.offsetting.title')}</p>
             <p className="text-xs text-gray-400">{t('balances.offsetting.description')}</p>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => addDraft('absorb')}
-              className="text-xs text-pt-green hover:text-green-800 font-medium border border-pt-green rounded px-2 py-1 transition-colors"
-            >
-              {t('balances.offsetting.addAbsorb')}
-            </button>
-            <button
-              onClick={() => addDraft('transfer')}
-              className="text-xs text-pt-green hover:text-green-800 font-medium border border-pt-green rounded px-2 py-1 transition-colors"
-            >
-              {t('balances.offsetting.addTransfer')}
-            </button>
-          </div>
+          {admin && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => addDraft('absorb')}
+                className="text-xs text-pt-green hover:text-green-800 font-medium border border-pt-green rounded px-2 py-1 transition-colors"
+              >
+                {t('balances.offsetting.addAbsorb')}
+              </button>
+              <button
+                onClick={() => addDraft('transfer')}
+                className="text-xs text-pt-green hover:text-green-800 font-medium border border-pt-green rounded px-2 py-1 transition-colors"
+              >
+                {t('balances.offsetting.addTransfer')}
+              </button>
+            </div>
+          )}
         </div>
 
         {allRules.length === 0 && (
@@ -319,13 +323,15 @@ export default function BalancesPage() {
                   </span>
                 </>
               )}
-              <button
-                onClick={() => removeSaved(rule.id)}
-                className="text-gray-400 hover:text-red-500 text-sm shrink-0"
-                aria-label={t('balances.offsetting.removeRule')}
-              >
-                ✕
-              </button>
+              {admin && (
+                <button
+                  onClick={() => removeSaved(rule.id)}
+                  className="text-gray-400 hover:text-red-500 text-sm shrink-0"
+                  aria-label={t('balances.offsetting.removeRule')}
+                >
+                  ✕
+                </button>
+              )}
             </div>
           ))}
 
@@ -373,13 +379,15 @@ export default function BalancesPage() {
                   </select>
                 </>
               )}
-              <button
-                onClick={() => removeDraft(idx)}
-                className="text-gray-400 hover:text-red-500 text-sm shrink-0"
-                aria-label={t('balances.offsetting.removeRule')}
-              >
-                ✕
-              </button>
+              {admin && (
+                <button
+                  onClick={() => removeDraft(idx)}
+                  className="text-gray-400 hover:text-red-500 text-sm shrink-0"
+                  aria-label={t('balances.offsetting.removeRule')}
+                >
+                  ✕
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -402,7 +410,7 @@ export default function BalancesPage() {
 
       <div className="space-y-3">
         {filtered.map((balance, idx) => (
-          <BalanceRow_ key={idx} balance={balance} onRecordPayment={openPaymentModal} />
+          <BalanceRow_ key={idx} balance={balance} onRecordPayment={admin ? openPaymentModal : undefined} />
         ))}
       </div>
 

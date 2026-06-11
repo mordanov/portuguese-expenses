@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, require_admin
 from app.schemas.category import CategoryCreate, CategoryListResponse, CategoryResponse, CategoryUpdate
 from app.services.category_service import CategoryReferencedError, CategoryService
 
@@ -28,11 +28,10 @@ async def list_categories(
     )
 
 
-@router.post("", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin)])
 async def create_category(
     body: CategoryCreate,
     session: AsyncSession = Depends(get_async_session),
-    _: str = Depends(get_current_user),
 ) -> CategoryResponse:
     service = CategoryService(session)
     category = await service.create_category(body.name, body.color)
@@ -40,12 +39,11 @@ async def create_category(
     return CategoryResponse.model_validate(category)
 
 
-@router.put("/{category_id}", response_model=CategoryResponse)
+@router.put("/{category_id}", response_model=CategoryResponse, dependencies=[Depends(require_admin)])
 async def update_category(
     category_id: uuid.UUID,
     body: CategoryUpdate,
     session: AsyncSession = Depends(get_async_session),
-    _: str = Depends(get_current_user),
 ) -> CategoryResponse:
     service = CategoryService(session)
     category = await service.update_category(category_id, body.name, body.color)
@@ -53,11 +51,10 @@ async def update_category(
     return CategoryResponse.model_validate(category)
 
 
-@router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin)])
 async def delete_category(
     category_id: uuid.UUID,
     session: AsyncSession = Depends(get_async_session),
-    _: str = Depends(get_current_user),
 ) -> None:
     service = CategoryService(session)
     try:

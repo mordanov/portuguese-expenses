@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, require_admin
 from app.repositories.item_repository import ItemRepository
 from app.repositories.ticket_repository import TicketRepository
 from app.schemas.item import AllocationReplaceRequest, AllocationResponse, ItemUpdateRequest
@@ -47,12 +47,11 @@ def _item_to_dict(item) -> dict:
     }
 
 
-@router.put("/{item_id}")
+@router.put("/{item_id}", dependencies=[Depends(require_admin)])
 async def update_item(
     item_id: uuid.UUID,
     body: ItemUpdateRequest,
     session: AsyncSession = Depends(get_async_session),
-    _: str = Depends(get_current_user),
 ) -> dict:
     item_repo = ItemRepository(session)
     item = await item_repo.get_by_id_with_detail(item_id)
@@ -91,12 +90,11 @@ async def update_item(
     return _item_to_dict(item)
 
 
-@router.put("/{item_id}/allocations", response_model=AllocationResponse)
+@router.put("/{item_id}/allocations", response_model=AllocationResponse, dependencies=[Depends(require_admin)])
 async def replace_allocations(
     item_id: uuid.UUID,
     body: AllocationReplaceRequest,
     session: AsyncSession = Depends(get_async_session),
-    _: str = Depends(get_current_user),
 ) -> AllocationResponse:
     if not body.member_ids:
         raise HTTPException(status_code=422, detail="member_ids must not be empty")

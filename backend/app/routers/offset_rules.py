@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, require_admin
 from app.repositories.offset_rule_repository import OffsetRuleRepository
 from app.schemas.offset_rule import OffsetRuleCreateRequest, OffsetRuleResponse, OffsetRulesListResponse
 
@@ -21,11 +21,10 @@ async def list_offset_rules(
     return OffsetRulesListResponse(items=[OffsetRuleResponse.model_validate(r) for r in rules])
 
 
-@router.post("", response_model=OffsetRuleResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=OffsetRuleResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin)])
 async def create_offset_rule(
     body: OffsetRuleCreateRequest,
     session: AsyncSession = Depends(get_async_session),
-    _: str = Depends(get_current_user),
 ) -> OffsetRuleResponse:
     repo = OffsetRuleRepository(session)
     rule = await repo.create(type=body.type, person_a_id=body.person_a_id, person_b_id=body.person_b_id)
@@ -33,11 +32,10 @@ async def create_offset_rule(
     return OffsetRuleResponse.model_validate(rule)
 
 
-@router.delete("/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{rule_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin)])
 async def delete_offset_rule(
     rule_id: uuid.UUID,
     session: AsyncSession = Depends(get_async_session),
-    _: str = Depends(get_current_user),
 ) -> None:
     repo = OffsetRuleRepository(session)
     rule = await repo.get_by_id(rule_id)

@@ -7,6 +7,7 @@
     "categories": "Categories",
     "reports": "Reports",
     "balances": "Balances",
+    "users": "Users",
     "logout": "Logout"
   },
   "auth": {
@@ -212,6 +213,35 @@
     "viewAll": "View all",
     "noTickets": "No tickets yet.",
     "noBalances": "All settled up!"
+  },
+  "users": {
+    "title": "Users",
+    "add": "Add User",
+    "username": "Username",
+    "role": "Role",
+    "status": "Status",
+    "active": "Active",
+    "blocked": "Blocked",
+    "block": "Block",
+    "unblock": "Unblock",
+    "roleAdmin": "Administrator",
+    "roleUser": "User",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "password": "Password",
+    "passwordPlaceholder": "Leave blank to keep current",
+    "usernamePlaceholder": "Enter username",
+    "usernameRequired": "Username is required",
+    "passwordRequired": "Password is required",
+    "usernameConflict": "Username already taken",
+    "empty": "No users yet.",
+    "editTitle": "Edit User",
+    "addTitle": "Add User",
+    "confirmBlock": "Block this user?",
+    "confirmBlockDesc": "They will not be able to log in.",
+    "selfDemoteError": "You cannot demote yourself",
+    "selfBlockError": "You cannot block yourself"
   },
   "common": {
     "loading": "Loading…",

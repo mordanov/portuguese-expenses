@@ -17,5 +17,7 @@ async def login(
     user = await get_user_by_username(session, request.username)
     if not user or not verify_password(request.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-    token = create_access_token(user.username)
-    return TokenResponse(access_token=token)
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled")
+    token = create_access_token(user.username, user.role)
+    return TokenResponse(access_token=token, role=user.role)

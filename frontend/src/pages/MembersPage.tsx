@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMembers, useCreateMember, useUpdateMember, useDeactivateMember } from '../api/members'
 import { isAxiosError } from 'axios'
+import { isAdmin } from '../api/auth'
 
 const memberSchema = z.object({
   name: z.string().min(2, 'nameMinLength').max(100),
@@ -13,6 +14,7 @@ type MemberFormData = z.infer<typeof memberSchema>
 
 export default function MembersPage() {
   const { t } = useTranslation()
+  const admin = isAdmin()
   const { data, isLoading } = useMembers()
   const { mutateAsync: createMember } = useCreateMember()
   const { mutateAsync: updateMember } = useUpdateMember()
@@ -56,7 +58,7 @@ export default function MembersPage() {
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">{t('members.title')}</h1>
 
-      <form onSubmit={handleSubmit(onAdd)} className="flex gap-3 mb-6">
+      {admin && <form onSubmit={handleSubmit(onAdd)} className="flex gap-3 mb-6">
         <div className="flex-1">
           <input
             {...register('name')}
@@ -76,7 +78,7 @@ export default function MembersPage() {
         >
           {t('members.add')}
         </button>
-      </form>
+      </form>}
 
       {isLoading && <p className="text-gray-500">{t('common.loading')}</p>}
 
@@ -107,41 +109,43 @@ export default function MembersPage() {
                 {member.is_active ? t('members.active') : t('members.inactive')}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              {editId === member.id ? (
-                <>
-                  <button
-                    onClick={() => saveRename(member.id)}
-                    className="text-sm text-pt-green font-medium hover:text-green-800"
-                  >
-                    {t('members.save')}
-                  </button>
-                  <button
-                    onClick={() => setEditId(null)}
-                    className="text-sm text-gray-400 hover:text-gray-600"
-                  >
-                    {t('members.cancel')}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => { setEditId(member.id); setEditName(member.name) }}
-                    className="text-sm text-gray-500 hover:text-pt-green"
-                  >
-                    {t('members.rename')}
-                  </button>
-                  {member.is_active && (
+            {admin && (
+              <div className="flex items-center gap-2">
+                {editId === member.id ? (
+                  <>
                     <button
-                      onClick={() => setConfirmDeactivate(member.id)}
-                      className="text-sm text-red-500 hover:text-red-700"
+                      onClick={() => saveRename(member.id)}
+                      className="text-sm text-pt-green font-medium hover:text-green-800"
                     >
-                      {t('members.deactivate')}
+                      {t('members.save')}
                     </button>
-                  )}
-                </>
-              )}
-            </div>
+                    <button
+                      onClick={() => setEditId(null)}
+                      className="text-sm text-gray-400 hover:text-gray-600"
+                    >
+                      {t('members.cancel')}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => { setEditId(member.id); setEditName(member.name) }}
+                      className="text-sm text-gray-500 hover:text-pt-green"
+                    >
+                      {t('members.rename')}
+                    </button>
+                    {member.is_active && (
+                      <button
+                        onClick={() => setConfirmDeactivate(member.id)}
+                        className="text-sm text-red-500 hover:text-red-700"
+                      >
+                        {t('members.deactivate')}
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
         ))}
         {!isLoading && members.length === 0 && (

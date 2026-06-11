@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, NavLink } from 'react-router-dom'
-import { logout } from '../../api/auth'
+import { logout, isAdmin } from '../../api/auth'
 
 const LOCALES = [
   { code: 'en', label: 'EN', flag: '🇬🇧' },
@@ -9,7 +9,7 @@ const LOCALES = [
   { code: 'pt', label: 'PT', flag: '🇵🇹' },
 ]
 
-const NAV_LINKS = [
+const BASE_navLinks = [
   { to: '/' as const, labelKey: 'nav.dashboard' },
   { to: '/tickets' as const, labelKey: 'nav.tickets' },
   { to: '/members' as const, labelKey: 'nav.members' },
@@ -22,6 +22,10 @@ export default function Navbar() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+
+  const navLinks = isAdmin()
+    ? [...BASE_navLinks, { to: '/users' as const, labelKey: 'nav.users' }]
+    : BASE_navLinks
 
   function handleLocaleChange(locale: string) {
     i18n.changeLanguage(locale)
@@ -57,7 +61,7 @@ export default function Navbar() {
               </NavLink>
               {/* Desktop nav links */}
               <div className="hidden md:flex items-center gap-1 ml-2">
-                {NAV_LINKS.map(({ to, labelKey }) => (
+                {navLinks.map(({ to, labelKey }) => (
                   <NavLink
                     key={to}
                     to={to}
@@ -146,7 +150,7 @@ export default function Navbar() {
 
             {/* Nav links */}
             <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-              {NAV_LINKS.map(({ to, labelKey }) => (
+              {navLinks.map(({ to, labelKey }) => (
                 <NavLink
                   key={to}
                   to={to}
