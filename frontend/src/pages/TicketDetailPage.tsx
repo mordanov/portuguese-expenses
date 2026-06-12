@@ -1,15 +1,21 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useTicket, useUpdateTicket, useDeleteTicket, useUpdateItem, useReplaceAllocations, useAddItem } from '../api/tickets'
+import { useTicket, useUpdateTicket, useDeleteTicket, useUpdateItem, useReplaceAllocations, useAddItem, type TicketItem } from '../api/tickets'
 import { useMembers } from '../api/members'
 import { useCategories } from '../api/categories'
 import MoneyDisplay from '../components/shared/MoneyDisplay'
 import { isAdmin } from '../api/auth'
 
+function itemTranslation(item: TicketItem, lang: string): string | null {
+  if (lang === 'ru') return item.translation_ru
+  if (lang === 'pt') return item.translation_pt
+  return item.translation_en
+}
+
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const admin = isAdmin()
 
@@ -253,16 +259,22 @@ export default function TicketDetailPage() {
             {ticket.items.map((item) => {
               const e = itemEdits[item.id]
               if (!e) return null
+              const trans = itemTranslation(item, i18n.language)
               return (
                 <div key={item.id} className="p-4 space-y-3">
                   {/* Name + price row */}
                   <div className="flex gap-2 items-start">
+                    <div className="flex-1">
                     <input
                       value={e.name}
                       onChange={(ev) => setItemEdits((p) => ({ ...p, [item.id]: { ...e, name: ev.target.value } }))}
-                      className="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
+                      className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
                       placeholder={t('review.name')}
                     />
+                    {trans && trans !== item.name && (
+                      <p className="text-xs text-gray-400 mt-0.5 px-1">{trans}</p>
+                    )}
+                    </div>
                     <input
                       type="number"
                       min="0"
@@ -319,9 +331,16 @@ export default function TicketDetailPage() {
               </tr>
             </thead>
             <tbody>
-              {ticket.items.map((item) => (
+              {ticket.items.map((item) => {
+                const trans = itemTranslation(item, i18n.language)
+                return (
                 <tr key={item.id} className="border-t border-gray-100">
-                  <td className="px-4 py-3">{item.name}</td>
+                  <td className="px-4 py-3">
+                    <span>{item.name}</span>
+                    {trans && trans !== item.name && (
+                      <span className="block text-xs text-gray-400 mt-0.5">{trans}</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     {item.category ? (
                       <span className="inline-flex items-center gap-1.5">
@@ -343,7 +362,8 @@ export default function TicketDetailPage() {
                     <MoneyDisplay amount={item.discounted_price} className="font-medium" />
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         )}

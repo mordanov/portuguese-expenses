@@ -21,6 +21,9 @@ export interface TicketItem {
   price: string
   discounted_price: string
   position: number
+  translation_en: string | null
+  translation_ru: string | null
+  translation_pt: string | null
   category: { id: string; name: string; color: string } | null
   allocated_members: { id: string; name: string; cost: string }[]
 }

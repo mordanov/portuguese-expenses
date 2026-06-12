@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
@@ -39,6 +39,9 @@ def _ticket_to_response(ticket) -> dict:
                     if item.category
                     else None
                 ),
+                "translation_en": item.translation_en,
+                "translation_ru": item.translation_ru,
+                "translation_pt": item.translation_pt,
                 "allocated_members": [
                     {
                         "id": str(alloc.member.id),
@@ -84,12 +87,19 @@ async def upload_receipt(
 @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin)])
 async def create_ticket(
     body: TicketCreateRequest,
+    background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_async_session),
 ) -> dict:
+    from app.config import get_settings as _gs
+    from app.routers.items import _translate_and_save_item
+
     service = TicketService(session)
     ticket = await service.save_ticket(body)
     await session.commit()
     ticket = await service.repo.get_ticket_with_detail(ticket.id)
+    db_url = _gs().database_url
+    for item in ticket.items:
+        background_tasks.add_task(_translate_and_save_item, item.id, item.name, db_url)
     return _ticket_to_response(ticket)
 
 
@@ -179,6 +189,7 @@ async def update_ticket(
 async def add_item_to_ticket(
     ticket_id: uuid.UUID,
     body: dict,
+    background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_async_session),
 ) -> dict:
     from app.repositories.item_repository import ItemRepository
@@ -230,7 +241,9 @@ async def add_item_to_ticket(
     ticket.total_price = sum(all_prices)
     await session.commit()
 
-    from app.routers.items import _item_to_dict
+    from app.routers.items import _item_to_dict, _translate_and_save_item
+    from app.config import get_settings as _gs
+    background_tasks.add_task(_translate_and_save_item, new_item.id, new_item.name, _gs().database_url)
     return _item_to_dict(new_item)
 
 

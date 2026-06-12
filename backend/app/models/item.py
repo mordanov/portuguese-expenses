@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, ForeignKey, Numeric, SmallInteger, String, func
+from sqlalchemy import DateTime, ForeignKey, Numeric, SmallInteger, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,6 +23,9 @@ class Item(Base):
         UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True
     )
     position: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0)
+    translation_en: Mapped[str | None] = mapped_column(Text, nullable=True)
+    translation_ru: Mapped[str | None] = mapped_column(Text, nullable=True)
+    translation_pt: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     ticket: Mapped["Ticket"] = relationship("Ticket", back_populates="items")  # noqa: F821

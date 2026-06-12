@@ -1,7 +1,7 @@
 import uuid
 from decimal import Decimal, InvalidOperation
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
@@ -27,6 +27,9 @@ def _item_to_dict(item) -> dict:
         "price": str(item.price),
         "discounted_price": str(item.discounted_price),
         "position": item.position,
+        "translation_en": item.translation_en,
+        "translation_ru": item.translation_ru,
+        "translation_pt": item.translation_pt,
         "category": (
             {
                 "id": str(item.category.id),
@@ -47,10 +50,36 @@ def _item_to_dict(item) -> dict:
     }
 
 
+async def _translate_and_save_item(item_id: uuid.UUID, name: str, database_url: str) -> None:
+    from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession as _AsyncSession, async_sessionmaker
+    from app.services.translation_service import translate_item_names
+    from app.models.item import Item as ItemModel
+    from sqlalchemy import select
+
+    translations = await translate_item_names([name])
+    if not translations:
+        return
+    t = translations[0]
+    engine = create_async_engine(database_url)
+    factory = async_sessionmaker(engine, expire_on_commit=False, class_=_AsyncSession)
+    try:
+        async with factory() as session:
+            result = await session.execute(select(ItemModel).where(ItemModel.id == item_id))
+            item = result.scalar_one_or_none()
+            if item:
+                item.translation_en = t["en"]
+                item.translation_ru = t["ru"]
+                item.translation_pt = t["pt"]
+                await session.commit()
+    finally:
+        await engine.dispose()
+
+
 @router.put("/{item_id}", dependencies=[Depends(require_admin)])
 async def update_item(
     item_id: uuid.UUID,
     body: ItemUpdateRequest,
+    background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_async_session),
 ) -> dict:
     item_repo = ItemRepository(session)
@@ -78,6 +107,7 @@ async def update_item(
     else:
         new_discounted = None
 
+    name_changed = body.name is not None and body.name != item.name
     item = await item_repo.update_item(
         item,
         name=body.name,
@@ -86,7 +116,15 @@ async def update_item(
         position=body.position,
         discounted_price=new_discounted,
     )
+    if name_changed:
+        item.translation_en = None
+        item.translation_ru = None
+        item.translation_pt = None
+        await session.flush()
     await session.commit()
+    if name_changed:
+        from app.config import get_settings as _gs
+        background_tasks.add_task(_translate_and_save_item, item.id, item.name, _gs().database_url)
     return _item_to_dict(item)
 
 
