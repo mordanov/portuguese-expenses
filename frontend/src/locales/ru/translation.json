@@ -108,7 +108,8 @@
     "total": "Итого",
     "addItem": "Добавить позицию",
     "removeItem": "Удалить",
-    "noCategory": "Без категории"
+    "noCategory": "Без категории",
+    "translating": "Перевод позиций…"
   },
   "allocate": {
     "selectMembers": "Кто потреблял эту позицию?",

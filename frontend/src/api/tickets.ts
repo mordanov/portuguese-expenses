@@ -5,6 +5,10 @@ export interface OCRItem {
   name: string
   price: string
   category_id: string | null
+  translation_en?: string | null
+  translation_ru?: string | null
+  translation_pt?: string | null
+  suggested_category_id?: string | null
 }
 
 export interface OCRDraft {
@@ -58,6 +62,25 @@ export interface TicketCreateRequest {
     category_id: string | null
     member_ids: string[]
   }>
+}
+
+export interface ItemTranslation {
+  en: string
+  ru: string
+  pt: string
+}
+
+export function useTranslateNames(names: string[]) {
+  return useQuery({
+    queryKey: ['translate-names', names],
+    queryFn: async () => {
+      if (names.length === 0) return [] as ItemTranslation[]
+      const response = await apiClient.post<ItemTranslation[]>('/tickets/translate-names', { names })
+      return response.data
+    },
+    enabled: names.length > 0,
+    staleTime: Infinity,
+  })
 }
 
 export function useUploadReceipt() {

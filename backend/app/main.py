@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -6,7 +8,28 @@ from app.routers import auth, balances, categories, health, items, members, offs
 
 settings = get_settings()
 
-app = FastAPI(title="Portuguese Drunk Sailors", version="1.0.0")
+_OTHER_NAMES = {"Other", "Разное", "Outro"}
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Ensure at least one "Other"-family category exists
+    from app.database import _async_session_factory
+    from app.models.category import Category
+    from sqlalchemy import select, func
+
+    async with _async_session_factory() as session:
+        result = await session.execute(
+            select(func.count()).where(Category.name.in_(list(_OTHER_NAMES)))
+        )
+        count = result.scalar_one()
+        if count == 0:
+            session.add(Category(name="Other", color="#9E9E9E"))
+            await session.commit()
+    yield
+
+
+app = FastAPI(title="Portuguese Drunk Sailors", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

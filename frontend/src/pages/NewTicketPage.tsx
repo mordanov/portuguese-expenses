@@ -15,7 +15,10 @@ function toReviewData(draft: OCRDraft): ReviewData {
     purchased_at: draft.purchased_at.slice(0, 10),
     paid_by_id: '',
     discount_total: draft.discount_total,
-    items: draft.items,
+    items: draft.items.map((item) => ({
+      ...item,
+      category_id: item.category_id ?? item.suggested_category_id ?? null,
+    })),
   }
 }
 

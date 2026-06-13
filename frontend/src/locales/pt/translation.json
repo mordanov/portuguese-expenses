@@ -108,7 +108,8 @@
     "total": "Total",
     "addItem": "Adicionar Item",
     "removeItem": "Remover",
-    "noCategory": "Sem categoria"
+    "noCategory": "Sem categoria",
+    "translating": "A traduzir itens…"
   },
   "allocate": {
     "selectMembers": "Quem consumiu este item?",

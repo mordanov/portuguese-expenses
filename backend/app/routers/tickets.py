@@ -3,6 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, UploadFile, status
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
@@ -69,13 +70,32 @@ def get_ocr_service() -> OCRService:
     return OCRService()
 
 
+class TranslateNamesRequest(BaseModel):
+    names: list[str]
+
+
+@router.post("/translate-names", dependencies=[Depends(require_admin)])
+async def translate_names(body: TranslateNamesRequest) -> list[dict]:
+    from app.services.translation_service import translate_item_names
+    results = await translate_item_names(body.names)
+    if results is None:
+        raise HTTPException(status_code=503, detail="Translation service unavailable")
+    return results
+
+
 @router.post("/upload", response_model=OCRDraft, dependencies=[Depends(require_admin)])
 async def upload_receipt(
     file: UploadFile,
+    session: AsyncSession = Depends(get_async_session),
     ocr_service: OCRService = Depends(get_ocr_service),
 ) -> OCRDraft:
+    from sqlalchemy import select as _select
+    from app.models.category import Category as _Category
+
+    result = await session.execute(_select(_Category.id, _Category.name))
+    categories = [{"id": row.id, "name": row.name} for row in result.all()]
     try:
-        return await ocr_service.process_upload(file)
+        return await ocr_service.process_upload(file, categories=categories)
     except UploadValidationError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
     except OCRParseError as exc:

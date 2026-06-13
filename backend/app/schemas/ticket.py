@@ -8,6 +8,10 @@ from pydantic import BaseModel
 class OCRItemDraft(BaseModel):
     name: str
     price: str
+    translation_en: str | None = None
+    translation_ru: str | None = None
+    translation_pt: str | None = None
+    suggested_category_id: str | None = None
 
 
 class OCRDraft(BaseModel):

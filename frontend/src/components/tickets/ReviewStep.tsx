@@ -17,12 +17,18 @@ interface ReviewStepProps {
 }
 
 export default function ReviewStep({ data, onChange }: ReviewStepProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { data: membersData } = useMembers({ active_only: true })
   const { data: categoriesData } = useCategories()
 
   const members = membersData?.items ?? []
   const categories = categoriesData?.items ?? []
+
+  function getTranslation(item: OCRItem): string | null {
+    const lang = i18n.language
+    const val = lang === 'ru' ? item.translation_ru : lang === 'pt' ? item.translation_pt : item.translation_en
+    return val && val !== item.name ? val : null
+  }
 
   function updateField<K extends keyof ReviewData>(key: K, value: ReviewData[K]) {
     onChange({ ...data, [key]: value })
@@ -108,48 +114,54 @@ export default function ReviewStep({ data, onChange }: ReviewStepProps) {
           </button>
         </div>
         <div className="space-y-3">
-          {data.items.map((item, idx) => (
-            <div key={idx} className="flex items-start gap-2 p-3 border border-gray-200 rounded-lg bg-white">
-              <div className="flex-1 min-w-0">
-                <input
-                  type="text"
-                  value={item.name}
-                  onChange={(e) => updateItem(idx, 'name', e.target.value)}
-                  placeholder={t('review.name')}
-                  className="w-full border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-pt-green mb-1"
-                />
-                <select
-                  value={item.category_id ?? ''}
-                  onChange={(e) => updateItem(idx, 'category_id', e.target.value || null)}
-                  className="w-full border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-pt-green"
+          {data.items.map((item, idx) => {
+            const trans = getTranslation(item)
+            return (
+              <div key={idx} className="flex items-start gap-2 p-3 border border-gray-200 rounded-lg bg-white">
+                <div className="flex-1 min-w-0">
+                  <input
+                    type="text"
+                    value={item.name}
+                    onChange={(e) => updateItem(idx, 'name', e.target.value)}
+                    placeholder={t('review.name')}
+                    className="w-full border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-pt-green mb-1"
+                  />
+                  {trans && (
+                    <p className="text-xs text-gray-400 px-0.5 mb-1">{trans}</p>
+                  )}
+                  <select
+                    value={item.category_id ?? ''}
+                    onChange={(e) => updateItem(idx, 'category_id', e.target.value || null)}
+                    className="w-full border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-pt-green"
+                  >
+                    <option value="">{t('review.noCategory')}</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="w-24 shrink-0">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={item.price}
+                    onChange={(e) => updateItem(idx, 'price', e.target.value)}
+                    placeholder={t('review.price')}
+                    className="w-full border border-gray-200 rounded px-2 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-pt-green"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeItem(idx)}
+                  className="text-gray-400 hover:text-red-500 text-sm shrink-0 mt-1"
+                  aria-label="Remove item"
                 >
-                  <option value="">{t('review.noCategory')}</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
+                  ✕
+                </button>
               </div>
-              <div className="w-24 shrink-0">
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={item.price}
-                  onChange={(e) => updateItem(idx, 'price', e.target.value)}
-                  placeholder={t('review.price')}
-                  className="w-full border border-gray-200 rounded px-2 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-pt-green"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => removeItem(idx)}
-                className="text-gray-400 hover:text-red-500 text-sm shrink-0 mt-1"
-                aria-label="Remove item"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
