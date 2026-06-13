@@ -17,6 +17,7 @@ export interface OCRDraft {
   items: OCRItem[]
   discount_total: string
   total_price: string
+  raw_image_url?: string | null
 }
 
 export interface TicketItem {
@@ -39,6 +40,7 @@ export interface Ticket {
   paid_by: { id: string; name: string }
   discount_total: string
   total_price: string
+  raw_image_url: string | null
   items: TicketItem[]
   created_at: string
 }
@@ -56,6 +58,7 @@ export interface TicketCreateRequest {
   paid_by_id: string
   total_price: string
   discount_total: string
+  raw_image_url?: string | null
   items: Array<{
     name: string
     price: string

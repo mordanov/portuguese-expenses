@@ -9,6 +9,7 @@ export interface ReviewData {
   paid_by_id: string
   discount_total: string
   items: OCRItem[]
+  raw_image_url?: string | null
 }
 
 interface ReviewStepProps {
@@ -18,7 +19,7 @@ interface ReviewStepProps {
 
 export default function ReviewStep({ data, onChange }: ReviewStepProps) {
   const { t, i18n } = useTranslation()
-  const { data: membersData } = useMembers({ active_only: true })
+  const { data: membersData } = useMembers({ can_pay_only: true })
   const { data: categoriesData } = useCategories()
 
   const members = membersData?.items ?? []

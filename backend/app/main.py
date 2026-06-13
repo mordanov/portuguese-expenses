@@ -1,7 +1,9 @@
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
 from app.routers import auth, balances, categories, health, items, members, offset_rules, payments, reports, tickets, users
@@ -30,6 +32,10 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Portuguese Drunk Sailors", version="1.0.0", lifespan=lifespan)
+
+_upload_dir = settings.upload_dir
+os.makedirs(_upload_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=_upload_dir), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,

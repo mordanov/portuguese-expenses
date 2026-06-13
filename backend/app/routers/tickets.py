@@ -89,19 +89,35 @@ async def upload_receipt(
     session: AsyncSession = Depends(get_async_session),
     ocr_service: OCRService = Depends(get_ocr_service),
 ) -> OCRDraft:
+    import os
+    import aiofiles
     from sqlalchemy import select as _select
     from app.models.category import Category as _Category
+    from app.config import get_settings as _gs
 
     result = await session.execute(_select(_Category.id, _Category.name))
     categories = [{"id": row.id, "name": row.name} for row in result.all()]
     try:
-        return await ocr_service.process_upload(file, categories=categories)
+        draft = await ocr_service.process_upload(file, categories=categories)
     except UploadValidationError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
     except OCRParseError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
     except OCRServiceError as exc:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc))
+
+    # Persist the uploaded file so it can be attached to the ticket
+    upload_dir = _gs().upload_dir
+    os.makedirs(upload_dir, exist_ok=True)
+    ext = (file.filename or "").rsplit(".", 1)[-1].lower() or "bin"
+    filename = f"{uuid.uuid4()}.{ext}"
+    dest = os.path.join(upload_dir, filename)
+    await file.seek(0)
+    content = await file.read()
+    async with aiofiles.open(dest, "wb") as fh:
+        await fh.write(content)
+    draft.raw_image_url = f"/uploads/{filename}"
+    return draft
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin)])

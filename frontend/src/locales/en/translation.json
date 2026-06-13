@@ -37,7 +37,11 @@
     "nameRequired": "Name is required",
     "nameMinLength": "Name must be at least 2 characters",
     "alreadyExists": "A member with this name already exists",
-    "empty": "No members yet. Add the first family member."
+    "empty": "No members yet. Add the first family member.",
+    "canPay": "Can pay tickets",
+    "kid": "Kid",
+    "edit": "Edit",
+    "editTitle": "Edit Member"
   },
   "categories": {
     "title": "Categories",
@@ -75,7 +79,9 @@
     "edit": "Edit",
     "delete": "Delete",
     "confirmDelete": "Delete this ticket?",
-    "confirmDeleteDesc": "This will permanently remove the ticket and all its allocations."
+    "confirmDeleteDesc": "This will permanently remove the ticket and all its allocations.",
+    "receipt": "Receipt",
+    "viewReceipt": "View receipt"
   },
   "wizard": {
     "steps": {
@@ -114,6 +120,8 @@
   "allocate": {
     "selectMembers": "Who consumed this item?",
     "selectAll": "Select all",
+    "adults": "Adults",
+    "kids": "Kids",
     "memberCost": "Cost per member",
     "perMember": "per member",
     "noMembersSelected": "Select at least one member per item"
@@ -179,18 +187,21 @@
     "summary": {
       "member": "Member",
       "total": "Total Spent",
-      "empty": "No data for selected period."
+      "empty": "No data for selected period.",
+      "grandTotal": "Grand total"
     },
     "categories": {
       "category": "Category",
       "total": "Total",
       "percentage": "Share",
       "uncategorized": "Uncategorized",
-      "empty": "No data for selected period."
+      "empty": "No data for selected period.",
+      "grandTotal": "Grand total"
     },
     "itemized": {
       "selectMember": "Select a member",
-      "empty": "No items for selected member and period."
+      "empty": "No items for selected member and period.",
+      "total": "Total"
     },
     "payments": {
       "tab": "Payments",

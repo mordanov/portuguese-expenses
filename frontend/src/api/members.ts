@@ -5,6 +5,8 @@ export interface Member {
   id: string
   name: string
   is_active: boolean
+  can_pay: boolean
+  is_kid: boolean
   created_at: string
 }
 
@@ -15,7 +17,7 @@ export interface MembersResponse {
   page_size: number
 }
 
-export function useMembers(params?: { active_only?: boolean }) {
+export function useMembers(params?: { active_only?: boolean; can_pay_only?: boolean }) {
   return useQuery({
     queryKey: ['members', params],
     queryFn: async () => {
@@ -39,8 +41,8 @@ export function useCreateMember() {
 export function useUpdateMember() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, name, is_active }: { id: string; name?: string; is_active?: boolean }) => {
-      const response = await apiClient.put<Member>(`/members/${id}`, { name, is_active })
+    mutationFn: async ({ id, name, is_active, can_pay, is_kid }: { id: string; name?: string; is_active?: boolean; can_pay?: boolean; is_kid?: boolean }) => {
+      const response = await apiClient.put<Member>(`/members/${id}`, { name, is_active, can_pay, is_kid })
       return response.data
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['members'] }) },

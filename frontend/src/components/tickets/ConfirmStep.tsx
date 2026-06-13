@@ -5,14 +5,20 @@ import { useMembers } from '../../api/members'
 import MoneyDisplay from '../shared/MoneyDisplay'
 import type { ReviewData } from './ReviewStep'
 import type { AllocationMap } from './AllocateStep'
+import type { OCRItem } from '../../api/tickets'
 
 interface ConfirmStepProps {
   reviewData: ReviewData
   allocations: AllocationMap
 }
 
+function getTranslation(item: OCRItem, lang: string): string | null {
+  const val = lang === 'ru' ? item.translation_ru : lang === 'pt' ? item.translation_pt : item.translation_en
+  return val && val !== item.name ? val : null
+}
+
 export default function ConfirmStep({ reviewData, allocations }: ConfirmStepProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { data: membersData } = useMembers({ active_only: true })
   const members = membersData?.items ?? []
@@ -42,6 +48,7 @@ export default function ConfirmStep({ reviewData, allocations }: ConfirmStepProp
       paid_by_id: reviewData.paid_by_id,
       total_price: (totalCents / 100).toFixed(2),
       discount_total: reviewData.discount_total,
+      raw_image_url: reviewData.raw_image_url ?? null,
       items: reviewData.items.map((item, idx) => ({
         name: item.name,
         price: item.price,
@@ -73,12 +80,18 @@ export default function ConfirmStep({ reviewData, allocations }: ConfirmStepProp
       <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
         <h3 className="font-semibold text-gray-800 mb-3">{t('confirm.items')}</h3>
         <div className="space-y-2">
-          {reviewData.items.map((item, idx) => (
-            <div key={idx} className="flex justify-between text-sm">
-              <span className="text-gray-700">{item.name}</span>
-              <MoneyDisplay amount={item.price} className="font-medium" />
-            </div>
-          ))}
+          {reviewData.items.map((item, idx) => {
+            const trans = getTranslation(item, i18n.language)
+            return (
+              <div key={idx} className="flex justify-between text-sm">
+                <span className="text-gray-700">
+                  {item.name}
+                  {trans && <span className="block text-xs text-gray-400">{trans}</span>}
+                </span>
+                <MoneyDisplay amount={item.price} className="font-medium" />
+              </div>
+            )
+          })}
           {parseFloat(reviewData.discount_total || '0') > 0 && (
             <div className="flex justify-between text-sm text-green-600 border-t pt-2 mt-2">
               <span>{t('review.discount')}</span>

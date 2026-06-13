@@ -14,13 +14,14 @@ router = APIRouter(prefix="/members", tags=["members"])
 @router.get("", response_model=MemberListResponse)
 async def list_members(
     active_only: bool = False,
+    can_pay_only: bool = False,
     page: int = 1,
     page_size: int = Query(default=20, ge=1, le=100),
     session: AsyncSession = Depends(get_async_session),
     _: str = Depends(get_current_user),
 ) -> MemberListResponse:
     service = MemberService(session)
-    members, total = await service.list_members(active_only=active_only, page=page, page_size=page_size)
+    members, total = await service.list_members(active_only=active_only, can_pay_only=can_pay_only, page=page, page_size=page_size)
     return MemberListResponse(
         items=[MemberResponse.model_validate(m) for m in members],
         total=total,
@@ -47,7 +48,7 @@ async def update_member(
     session: AsyncSession = Depends(get_async_session),
 ) -> MemberResponse:
     service = MemberService(session)
-    member = await service.update_member(member_id, body.name, body.is_active)
+    member = await service.update_member(member_id, body.name, body.is_active, body.can_pay, body.is_kid)
     await session.commit()
     return MemberResponse.model_validate(member)
 

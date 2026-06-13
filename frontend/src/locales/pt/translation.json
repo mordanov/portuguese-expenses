@@ -37,7 +37,11 @@
     "nameRequired": "Nome é obrigatório",
     "nameMinLength": "O nome deve ter pelo menos 2 caracteres",
     "alreadyExists": "Já existe um membro com este nome",
-    "empty": "Sem membros. Adicione o primeiro membro da família."
+    "empty": "Sem membros. Adicione o primeiro membro da família.",
+    "canPay": "Pode pagar talões",
+    "kid": "Criança",
+    "edit": "Editar",
+    "editTitle": "Editar Membro"
   },
   "categories": {
     "title": "Categorias",
@@ -75,7 +79,9 @@
     "edit": "Editar",
     "delete": "Eliminar",
     "confirmDelete": "Eliminar este talão?",
-    "confirmDeleteDesc": "O talão e todas as alocações serão eliminados permanentemente."
+    "confirmDeleteDesc": "O talão e todas as alocações serão eliminados permanentemente.",
+    "receipt": "Recibo",
+    "viewReceipt": "Ver recibo"
   },
   "wizard": {
     "steps": {
@@ -114,6 +120,8 @@
   "allocate": {
     "selectMembers": "Quem consumiu este item?",
     "selectAll": "Seleccionar todos",
+    "adults": "Adultos",
+    "kids": "Crianças",
     "memberCost": "Custo por membro",
     "perMember": "por membro",
     "noMembersSelected": "Seleccione pelo menos um membro por item"
@@ -179,18 +187,21 @@
     "summary": {
       "member": "Membro",
       "total": "Total Gasto",
-      "empty": "Sem dados para o período seleccionado."
+      "empty": "Sem dados para o período seleccionado.",
+      "grandTotal": "Total geral"
     },
     "categories": {
       "category": "Categoria",
       "total": "Total",
       "percentage": "Quota",
       "uncategorized": "Sem categoria",
-      "empty": "Sem dados para o período seleccionado."
+      "empty": "Sem dados para o período seleccionado.",
+      "grandTotal": "Total geral"
     },
     "itemized": {
       "selectMember": "Seleccionar membro",
-      "empty": "Sem itens para o membro e período seleccionados."
+      "empty": "Sem itens para o membro e período seleccionados.",
+      "total": "Total"
     },
     "payments": {
       "tab": "Pagamentos",

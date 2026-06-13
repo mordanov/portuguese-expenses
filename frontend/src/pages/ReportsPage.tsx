@@ -123,7 +123,17 @@ export default function ReportsPage() {
       {!loading && tab === 'summary' && (
         (!summary || summary.length === 0)
           ? <p className="text-gray-500 text-center py-8">{t('reports.summary.empty')}</p>
-          : <SummaryTable rows={summary} />
+          : (
+            <div>
+              <SummaryTable rows={summary} />
+              <p className="text-right text-sm font-semibold text-gray-700 mt-3">
+                {t('reports.summary.grandTotal')}:{' '}
+                <span className="text-pt-green">
+                  €{(summary.reduce((s, r) => s + Math.round(parseFloat(r.total) * 100), 0) / 100).toFixed(2)}
+                </span>
+              </p>
+            </div>
+          )
       )}
 
       {!loading && tab === 'itemized' && (
@@ -135,29 +145,37 @@ export default function ReportsPage() {
             <p className="text-gray-500 text-center py-8">{t('reports.itemized.empty')}</p>
           )}
           {appliedMember && itemized && itemized.length > 0 && (
-            <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('tickets.store')}</th>
-                    <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('review.name')}</th>
-                    <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('tickets.date')}</th>
-                    <th className="text-right px-4 py-3 text-gray-600 font-medium">{t('review.price')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {itemized.map((row, idx) => (
-                    <tr key={idx} className="border-t border-gray-100 bg-white">
-                      <td className="px-4 py-3 text-gray-700">{row.store_name}</td>
-                      <td className="px-4 py-3">{row.item_name}</td>
-                      <td className="px-4 py-3 text-gray-500">{row.purchased_at.slice(0, 10)}</td>
-                      <td className="px-4 py-3 text-right">
-                        <MoneyDisplay amount={row.discounted_price} className="font-medium" />
-                      </td>
+            <div>
+              <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('tickets.store')}</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('review.name')}</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('tickets.date')}</th>
+                      <th className="text-right px-4 py-3 text-gray-600 font-medium">{t('review.price')}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {itemized.map((row, idx) => (
+                      <tr key={idx} className="border-t border-gray-100 bg-white">
+                        <td className="px-4 py-3 text-gray-700">{row.store_name}</td>
+                        <td className="px-4 py-3">{row.item_name}</td>
+                        <td className="px-4 py-3 text-gray-500">{row.purchased_at.slice(0, 10)}</td>
+                        <td className="px-4 py-3 text-right">
+                          <MoneyDisplay amount={row.discounted_price} className="font-medium" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-right text-sm font-semibold text-gray-700 mt-3">
+                {t('reports.itemized.total')}:{' '}
+                <span className="text-pt-green">
+                  €{(itemized.reduce((s, r) => s + Math.round(parseFloat(r.discounted_price) * 100), 0) / 100).toFixed(2)}
+                </span>
+              </p>
             </div>
           )}
         </div>
@@ -166,7 +184,17 @@ export default function ReportsPage() {
       {!loading && tab === 'categories' && (
         (!categories || categories.length === 0)
           ? <p className="text-gray-500 text-center py-8">{t('reports.categories.empty')}</p>
-          : <CategoryPieChart rows={categories} />
+          : (
+            <div>
+              <CategoryPieChart rows={categories} />
+              <p className="text-right text-sm font-semibold text-gray-700 mt-3">
+                {t('reports.categories.grandTotal')}:{' '}
+                <span className="text-pt-green">
+                  €{(categories.reduce((s, r) => s + Math.round(parseFloat(r.total) * 100), 0) / 100).toFixed(2)}
+                </span>
+              </p>
+            </div>
+          )
       )}
 
       {!loading && tab === 'payments' && (

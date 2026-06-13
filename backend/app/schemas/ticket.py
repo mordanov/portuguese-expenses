@@ -20,6 +20,7 @@ class OCRDraft(BaseModel):
     items: list[OCRItemDraft]
     discount_total: str
     total_price: str
+    raw_image_url: str | None = None
 
 
 class ItemCreateRequest(BaseModel):

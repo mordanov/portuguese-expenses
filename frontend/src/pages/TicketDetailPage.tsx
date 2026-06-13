@@ -234,6 +234,19 @@ export default function TicketDetailPage() {
                 onChange={(e) => setDiscountTotal(e.target.value)}
                 className="border border-gray-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-pt-green"
               />
+              {ticket.raw_image_url && (
+                <>
+                  <span className="text-gray-500 self-center">{t('tickets.receipt')}</span>
+                  <a
+                    href={`${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'}${ticket.raw_image_url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-pt-green hover:underline text-sm font-medium"
+                  >
+                    {t('tickets.viewReceipt')}
+                  </a>
+                </>
+              )}
             </>
           ) : (
             <>
@@ -245,6 +258,19 @@ export default function TicketDetailPage() {
                 <>
                   <span className="text-gray-500">{t('review.discount')}</span>
                   <MoneyDisplay amount={ticket.discount_total} className="text-green-600" />
+                </>
+              )}
+              {ticket.raw_image_url && (
+                <>
+                  <span className="text-gray-500">{t('tickets.receipt')}</span>
+                  <a
+                    href={`${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'}${ticket.raw_image_url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-pt-green hover:underline text-sm font-medium"
+                  >
+                    {t('tickets.viewReceipt')}
+                  </a>
                 </>
               )}
             </>

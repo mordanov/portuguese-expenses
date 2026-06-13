@@ -15,12 +15,16 @@ class MemberCreate(MemberBase):
 class MemberUpdate(BaseModel):
     name: str | None = None
     is_active: bool | None = None
+    can_pay: bool | None = None
+    is_kid: bool | None = None
 
 
 class MemberResponse(BaseModel):
     id: uuid.UUID
     name: str
     is_active: bool
+    can_pay: bool
+    is_kid: bool
     created_at: datetime
 
     model_config = {"from_attributes": True}

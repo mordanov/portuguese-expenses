@@ -22,6 +22,17 @@ class MemberRepository(BaseRepository[FamilyMember]):
         rows = (await self.session.execute(stmt)).scalars().all()
         return list(rows), total
 
+    async def list_can_pay(self, page: int = 1, page_size: int = 20) -> tuple[list[FamilyMember], int]:
+        stmt = select(FamilyMember).where(
+            FamilyMember.is_active == True,  # noqa: E712
+            FamilyMember.can_pay == True,  # noqa: E712
+        )
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total = (await self.session.execute(count_stmt)).scalar_one()
+        stmt = stmt.offset((page - 1) * page_size).limit(page_size)
+        rows = (await self.session.execute(stmt)).scalars().all()
+        return list(rows), total
+
     async def get_by_id(self, id: uuid.UUID) -> FamilyMember | None:
         return await super().get_by_id(id)
 
