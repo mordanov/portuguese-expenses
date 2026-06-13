@@ -46,6 +46,9 @@ class TicketRepository(BaseRepository[Ticket]):
                 discounted_price=item_data["discounted_price"],
                 category_id=item_data.get("category_id"),
                 position=item_data.get("position", 0),
+                translation_en=item_data.get("translation_en"),
+                translation_ru=item_data.get("translation_ru"),
+                translation_pt=item_data.get("translation_pt"),
             )
             self.session.add(item)
             await self.session.flush()

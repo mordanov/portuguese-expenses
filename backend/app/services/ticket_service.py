@@ -71,6 +71,9 @@ class TicketService:
                     "category_id": item.category_id,
                     "position": item.position,
                     "member_ids": item.member_ids,
+                    "translation_en": item.translation_en,
+                    "translation_ru": item.translation_ru,
+                    "translation_pt": item.translation_pt,
                 }
             )
 

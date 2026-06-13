@@ -119,7 +119,8 @@ async def create_ticket(
     ticket = await service.repo.get_ticket_with_detail(ticket.id)
     db_url = _gs().database_url
     for item in ticket.items:
-        background_tasks.add_task(_translate_and_save_item, item.id, item.name, db_url)
+        if item.translation_en is None:
+            background_tasks.add_task(_translate_and_save_item, item.id, item.name, db_url)
     return _ticket_to_response(ticket)
 
 

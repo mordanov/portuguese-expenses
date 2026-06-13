@@ -47,6 +47,9 @@ export default function ConfirmStep({ reviewData, allocations }: ConfirmStepProp
         price: item.price,
         category_id: item.category_id,
         member_ids: allocations[idx] ?? [],
+        translation_en: item.translation_en ?? null,
+        translation_ru: item.translation_ru ?? null,
+        translation_pt: item.translation_pt ?? null,
       })),
     }
     await createTicket(payload)

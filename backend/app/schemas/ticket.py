@@ -28,6 +28,9 @@ class ItemCreateRequest(BaseModel):
     category_id: uuid.UUID | None = None
     position: int = 0
     member_ids: list[uuid.UUID]
+    translation_en: str | None = None
+    translation_ru: str | None = None
+    translation_pt: str | None = None
 
 
 class TicketCreateRequest(BaseModel):

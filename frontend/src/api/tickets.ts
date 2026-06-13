@@ -61,6 +61,9 @@ export interface TicketCreateRequest {
     price: string
     category_id: string | null
     member_ids: string[]
+    translation_en?: string | null
+    translation_ru?: string | null
+    translation_pt?: string | null
   }>
 }
 
