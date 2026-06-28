@@ -53,7 +53,7 @@ async def test_invalid_file_type_raises_validation_error():
 @pytest.mark.asyncio
 async def test_oversized_file_raises_validation_error():
     service = OCRService(openai_client=MagicMock())
-    big = b"\xff\xd8\xff" + b"\x00" * (11 * 1024 * 1024)
+    big = b"\xff\xd8\xff" + b"\x00" * (21 * 1024 * 1024)
     upload = _make_upload(big, "image/jpeg")
     with pytest.raises(UploadValidationError):
         await service.process_upload(upload)
