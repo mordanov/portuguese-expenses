@@ -34,7 +34,8 @@ class Settings(BaseSettings):
 
     # Upload
     upload_dir: str = "/tmp/uploads"
-    max_upload_size_mb: int = 10
+    max_upload_size_mb: int = 20
+    max_total_upload_size_mb: int = 200
 
     # CORS
     frontend_url: str = "http://localhost:3000"
