@@ -1,4 +1,4 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { I18nextProvider } from 'react-i18next'
 import { http, HttpResponse } from 'msw'
@@ -17,12 +17,12 @@ const mockDraft: OCRDraft = {
   total_price: '5.99',
 }
 
-function renderUpload(onSuccess = vi.fn()) {
+function renderUpload(onSuccess = vi.fn(), onManual = vi.fn()) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
-        <UploadStep onSuccess={onSuccess} />
+        <UploadStep onSuccess={onSuccess} onManual={onManual} />
       </I18nextProvider>
     </QueryClientProvider>,
   )
@@ -69,6 +69,8 @@ describe('UploadStep', () => {
     const input = screen.getByLabelText('Upload receipt')
     const file = new File(['jpeg-content'], 'receipt.jpg', { type: 'image/jpeg' })
     uploadFile(input, file)
+    const uploadBtn = await screen.findByRole('button', { name: /upload/i })
+    await act(async () => { fireEvent.click(uploadBtn) })
     await waitFor(() => expect(onSuccess).toHaveBeenCalledWith(mockDraft), { timeout: 5000 })
   })
 
@@ -80,6 +82,8 @@ describe('UploadStep', () => {
     const input = screen.getByLabelText('Upload receipt')
     const file = new File(['content'], 'receipt.jpg', { type: 'image/jpeg' })
     uploadFile(input, file)
+    const uploadBtn = await screen.findByRole('button', { name: /upload/i })
+    await act(async () => { fireEvent.click(uploadBtn) })
     await waitFor(() => expect(screen.getByText(/upload failed/i)).toBeInTheDocument(), { timeout: 5000 })
   })
 })

@@ -35,7 +35,7 @@ async def test_upload_valid_jpeg_returns_draft(client, auth_headers):
         content = b"\xff\xd8\xff" + b"\x00" * 100
         resp = await client.post(
             "/tickets/upload",
-            files={"file": ("test.jpg", io.BytesIO(content), "image/jpeg")},
+            files=[("files", ("test.jpg", io.BytesIO(content), "image/jpeg"))],
             headers=auth_headers,
         )
         assert resp.status_code == 200
@@ -59,7 +59,7 @@ async def test_upload_exe_rejected(client, auth_headers):
     try:
         resp = await client.post(
             "/tickets/upload",
-            files={"file": ("test.exe", io.BytesIO(b"MZ\x90\x00"), "application/octet-stream")},
+            files=[("files", ("test.exe", io.BytesIO(b"MZ\x90\x00"), "application/octet-stream"))],
             headers=auth_headers,
         )
         assert resp.status_code == 422
@@ -72,7 +72,7 @@ async def test_upload_without_jwt(client):
     content = b"\xff\xd8\xff" + b"\x00" * 100
     resp = await client.post(
         "/tickets/upload",
-        files={"file": ("test.jpg", io.BytesIO(content), "image/jpeg")},
+        files=[("files", ("test.jpg", io.BytesIO(content), "image/jpeg"))],
     )
     assert resp.status_code in (401, 403)
 
