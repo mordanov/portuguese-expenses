@@ -92,15 +92,19 @@
     }
   },
   "upload": {
-    "dragDrop": "Arraste o recibo aqui ou clique para seleccionar",
+    "dragDrop": "Arraste o(s) recibo(s) aqui ou clique para seleccionar",
     "fileTypes": "JPEG, PNG, WEBP ou PDF",
-    "maxSize": "Máx. 10 MB",
+    "maxSize": "Máx. 10 MB por ficheiro",
+    "multipleHint": "Pode seleccionar vários ficheiros para talões longos",
     "uploading": "A fazer upload e a extrair itens…",
     "error": "Falha no upload. Tente novamente.",
     "fileTooLarge": "O ficheiro excede o limite de 10 MB",
     "invalidType": "Apenas são aceites ficheiros JPEG, PNG, WEBP ou PDF",
     "or": "ou",
-    "enterManually": "Introduzir talão manualmente"
+    "enterManually": "Introduzir talão manualmente",
+    "removeFile": "Remover ficheiro",
+    "uploadOne": "Fazer upload e extrair",
+    "uploadMany": "Fazer upload de {{count}} fotos e extrair"
   },
   "review": {
     "storeName": "Nome da Loja",

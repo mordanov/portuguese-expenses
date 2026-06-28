@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -85,7 +85,7 @@ async def translate_names(body: TranslateNamesRequest) -> list[dict]:
 
 @router.post("/upload", response_model=OCRDraft, dependencies=[Depends(require_admin)])
 async def upload_receipt(
-    file: UploadFile,
+    files: list[UploadFile] = File(...),
     session: AsyncSession = Depends(get_async_session),
     ocr_service: OCRService = Depends(get_ocr_service),
 ) -> OCRDraft:
@@ -95,10 +95,13 @@ async def upload_receipt(
     from app.models.category import Category as _Category
     from app.config import get_settings as _gs
 
+    if not files:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="No files provided")
+
     result = await session.execute(_select(_Category.id, _Category.name))
     categories = [{"id": row.id, "name": row.name} for row in result.all()]
     try:
-        draft = await ocr_service.process_upload(file, categories=categories)
+        draft = await ocr_service.process_multiple_uploads(files, categories=categories)
     except UploadValidationError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
     except OCRParseError as exc:
@@ -106,14 +109,15 @@ async def upload_receipt(
     except OCRServiceError as exc:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc))
 
-    # Persist the uploaded file so it can be attached to the ticket
+    # Persist the first uploaded file as the representative image for the ticket
     upload_dir = _gs().upload_dir
     os.makedirs(upload_dir, exist_ok=True)
-    ext = (file.filename or "").rsplit(".", 1)[-1].lower() or "bin"
+    first_file = files[0]
+    ext = (first_file.filename or "").rsplit(".", 1)[-1].lower() or "bin"
     filename = f"{uuid.uuid4()}.{ext}"
     dest = os.path.join(upload_dir, filename)
-    await file.seek(0)
-    content = await file.read()
+    await first_file.seek(0)
+    content = await first_file.read()
     async with aiofiles.open(dest, "wb") as fh:
         await fh.write(content)
     draft.raw_image_url = f"/uploads/{filename}"

@@ -1,6 +1,8 @@
 import io
 import json
 import logging
+import re
+import unicodedata
 from typing import Any
 
 import magic
@@ -180,3 +182,70 @@ class OCRService:
             )
         except Exception as exc:
             raise OCRParseError(f"OCR response missing required fields: {exc}") from exc
+
+    @staticmethod
+    def _normalize_item_key(name: str, price: str) -> str:
+        # Normalize to lowercase ASCII, collapse whitespace, round price to 2dp for comparison
+        nfkd = unicodedata.normalize("NFKD", name.lower())
+        ascii_name = nfkd.encode("ascii", "ignore").decode("ascii")
+        clean = re.sub(r"\s+", " ", ascii_name).strip()
+        try:
+            from decimal import Decimal
+            price_key = str(Decimal(price).quantize(Decimal("0.01")))
+        except Exception:
+            price_key = price.strip()
+        return f"{clean}|{price_key}"
+
+    async def process_multiple_uploads(
+        self,
+        files: list[UploadFile],
+        categories: list[dict] | None = None,
+    ) -> OCRDraft:
+        """Process one or more receipt images and merge into a single OCRDraft.
+
+        Multiple images of the same long receipt may produce overlapping items;
+        exact duplicates (same normalised name + price) are filtered out.
+        Multiple distinct receipts are simply concatenated.
+        """
+        if not files:
+            raise UploadValidationError("No files provided")
+
+        drafts: list[OCRDraft] = []
+        for f in files:
+            draft = await self.process_upload(f, categories=categories)
+            drafts.append(draft)
+
+        if len(drafts) == 1:
+            return drafts[0]
+
+        # Use header fields from the first receipt
+        merged = OCRDraft(
+            store_name=drafts[0].store_name,
+            purchased_at=drafts[0].purchased_at,
+            discount_total=drafts[0].discount_total,
+            total_price=drafts[0].total_price,
+            items=[],
+            raw_image_url=drafts[0].raw_image_url,
+        )
+
+        seen: set[str] = set()
+        for draft in drafts:
+            for item in draft.items:
+                key = self._normalize_item_key(item.name, item.price)
+                if key in seen:
+                    continue
+                seen.add(key)
+                merged.items.append(item)
+
+        # Sum totals across all distinct receipts (discount_total and total_price
+        # may each come from a separate receipt; sum them for the merged result)
+        if len(drafts) > 1:
+            from decimal import Decimal
+            merged.discount_total = str(
+                sum(Decimal(d.discount_total) for d in drafts)
+            )
+            merged.total_price = str(
+                sum(Decimal(item.price) for item in merged.items)
+            )
+
+        return merged

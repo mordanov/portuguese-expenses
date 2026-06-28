@@ -92,15 +92,19 @@
     }
   },
   "upload": {
-    "dragDrop": "Drag & drop your receipt here, or click to select",
+    "dragDrop": "Drag & drop your receipt(s) here, or click to select",
     "fileTypes": "JPEG, PNG, WEBP or PDF",
-    "maxSize": "Max 10 MB",
+    "maxSize": "Max 10 MB per file",
+    "multipleHint": "You can select multiple files for long receipts",
     "uploading": "Uploading and extracting items…",
     "error": "Upload failed. Please try again.",
     "fileTooLarge": "File exceeds 10 MB limit",
     "invalidType": "Only JPEG, PNG, WEBP, or PDF files are accepted",
     "or": "or",
-    "enterManually": "Enter ticket manually"
+    "enterManually": "Enter ticket manually",
+    "removeFile": "Remove file",
+    "uploadOne": "Upload & extract",
+    "uploadMany": "Upload {{count}} photos & extract"
   },
   "review": {
     "storeName": "Store Name",

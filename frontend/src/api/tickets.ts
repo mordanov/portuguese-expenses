@@ -91,9 +91,10 @@ export function useTranslateNames(names: string[]) {
 
 export function useUploadReceipt() {
   return useMutation({
-    mutationFn: async (file: File): Promise<OCRDraft> => {
+    mutationFn: async (files: File | File[]): Promise<OCRDraft> => {
+      const fileList = Array.isArray(files) ? files : [files]
       const formData = new FormData()
-      formData.append('file', file)
+      for (const f of fileList) formData.append('files', f)
       const response = await apiClient.post<OCRDraft>('/tickets/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
