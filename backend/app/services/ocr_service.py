@@ -144,7 +144,8 @@ class OCRService:
                         ],
                     },
                 ],
-                max_tokens=2000,
+                max_tokens=4096,
+                response_format={"type": "json_object"},
             )
         except Exception as exc:
             log.error("OCR API call failed", exc_info=True)
@@ -152,16 +153,16 @@ class OCRService:
 
         raw = response.choices[0].message.content or ""
         raw = raw.strip()
-        if raw.startswith("```"):
-            raw = "\n".join(raw.split("\n")[1:])
-            if raw.endswith("```"):
-                raw = raw[: raw.rfind("```")]
 
-        if not raw.startswith("{"):
-            log.warning("OCR model returned non-JSON response: %s", raw[:200])
+        # Extract JSON object even if the model wrapped it in prose or fences
+        start = raw.find("{")
+        end = raw.rfind("}")
+        if start == -1 or end == -1:
+            log.warning("OCR model returned no JSON object: %s", raw[:200])
             raise UploadValidationError(
                 "The image does not appear to be a receipt. Please upload a clear photo of a receipt."
             )
+        raw = raw[start : end + 1]
 
         try:
             data = json.loads(raw)
