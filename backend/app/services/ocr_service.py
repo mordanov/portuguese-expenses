@@ -56,6 +56,22 @@ Rules:
 - Translations should be concise product names only."""
 
 
+def _normalize_price(value: str) -> str:
+    """Convert locale-formatted price strings to plain decimal notation.
+
+    Handles European format (1.234,56 → 1234.56) and simple comma decimals (1,95 → 1.95).
+    """
+    value = value.strip()
+    # European thousand-separator: digits.digits,digits  e.g. "1.234,56"
+    if "," in value and "." in value:
+        # Assume . is thousand-separator, , is decimal separator
+        value = value.replace(".", "").replace(",", ".")
+    else:
+        # Simple comma decimal: "1,95" → "1.95"
+        value = value.replace(",", ".")
+    return value
+
+
 class UploadValidationError(Exception):
     pass
 
@@ -174,7 +190,7 @@ class OCRService:
             for item in data.get("items", []):
                 items.append(OCRItemDraft(
                     name=item["name"],
-                    price=str(item["price"]),
+                    price=_normalize_price(str(item["price"])),
                     translation_en=item.get("translation_en") or None,
                     translation_ru=item.get("translation_ru") or None,
                     translation_pt=item.get("translation_pt") or None,
@@ -184,8 +200,8 @@ class OCRService:
                 store_name=data.get("store_name", ""),
                 purchased_at=data.get("purchased_at", ""),
                 items=items,
-                discount_total=str(data.get("discount_total", "0.00")),
-                total_price=str(data.get("total_price", "0.00")),
+                discount_total=_normalize_price(str(data.get("discount_total", "0.00"))),
+                total_price=_normalize_price(str(data.get("total_price", "0.00"))),
             )
         except Exception as exc:
             raise OCRParseError(f"OCR response missing required fields: {exc}") from exc
