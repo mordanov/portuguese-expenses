@@ -35,7 +35,7 @@ async def test_valid_jpeg_returns_draft(mock_ocr_client):
 
 @pytest.mark.asyncio
 async def test_malformed_json_raises_parse_error():
-    client = _make_mock_client("not json at all {{{")
+    client = _make_mock_client("{not valid json {{{")
     service = OCRService(openai_client=client)
     upload = _make_upload(b"\xff\xd8\xff" + b"\x00" * 100, "image/jpeg")
     with pytest.raises(OCRParseError):
