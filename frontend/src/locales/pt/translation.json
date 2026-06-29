@@ -98,6 +98,7 @@
     "multipleHint": "Pode seleccionar vários ficheiros para talões longos",
     "uploading": "A fazer upload e a extrair itens…",
     "error": "Falha no upload. Tente novamente.",
+    "notAReceipt": "A imagem não parece ser um talão. Faça upload de uma foto nítida de um talão.",
     "fileTooLarge": "O ficheiro excede o limite de 10 MB",
     "invalidType": "Apenas são aceites ficheiros JPEG, PNG, WEBP ou PDF",
     "or": "ou",

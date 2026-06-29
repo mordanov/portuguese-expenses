@@ -67,8 +67,13 @@ export default function UploadStep({ onSuccess, onManual }: UploadStepProps) {
     try {
       const draft = await uploadReceipt(selectedFiles)
       onSuccess(draft)
-    } catch {
-      setClientError(t('upload.error'))
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? ''
+      if (detail.toLowerCase().includes('does not appear to be a receipt')) {
+        setClientError(t('upload.notAReceipt'))
+      } else {
+        setClientError(t('upload.error'))
+      }
     }
   }
 

@@ -98,6 +98,7 @@
     "multipleHint": "You can select multiple files for long receipts",
     "uploading": "Uploading and extracting items…",
     "error": "Upload failed. Please try again.",
+    "notAReceipt": "The image does not appear to be a receipt. Please upload a clear photo of a receipt.",
     "fileTooLarge": "File exceeds 10 MB limit",
     "invalidType": "Only JPEG, PNG, WEBP, or PDF files are accepted",
     "or": "or",

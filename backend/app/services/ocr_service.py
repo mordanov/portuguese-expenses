@@ -157,6 +157,12 @@ class OCRService:
             if raw.endswith("```"):
                 raw = raw[: raw.rfind("```")]
 
+        if not raw.startswith("{"):
+            log.warning("OCR model returned non-JSON response: %s", raw[:200])
+            raise UploadValidationError(
+                "The image does not appear to be a receipt. Please upload a clear photo of a receipt."
+            )
+
         try:
             data = json.loads(raw)
         except (ValueError, TypeError) as exc:
