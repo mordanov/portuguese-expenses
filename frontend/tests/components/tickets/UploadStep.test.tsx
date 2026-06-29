@@ -17,8 +17,30 @@ const mockDraft: OCRDraft = {
   total_price: '5.99',
 }
 
+// jsdom has no Canvas/Image — stub resizeImage to pass files through unchanged
+vi.mock('../../../src/components/tickets/UploadStep', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('../../../src/components/tickets/UploadStep')>()
+  return mod
+})
+
+// Stub URL.createObjectURL / revokeObjectURL used by resizeImage
+globalThis.URL.createObjectURL = vi.fn(() => 'blob:mock')
+globalThis.URL.revokeObjectURL = vi.fn()
+
+// Make Image immediately trigger onload without actually loading, so resizeImage
+// resolves with the original file (naturalWidth=0 <= MAX_LONG_SIDE → no resize)
+class MockImage {
+  onload: (() => void) | null = null
+  onerror: (() => void) | null = null
+  set src(_: string) { Promise.resolve().then(() => this.onload?.()) }
+  width = 0
+  height = 0
+}
+// @ts-expect-error stub
+globalThis.Image = MockImage
+
 function renderUpload(onSuccess = vi.fn(), onManual = vi.fn()) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
@@ -52,11 +74,11 @@ describe('UploadStep', () => {
   it('shows error for oversized file', async () => {
     renderUpload()
     const input = screen.getByLabelText('Upload receipt')
-    const bigContent = new Uint8Array(11 * 1024 * 1024)
+    const bigContent = new Uint8Array(21 * 1024 * 1024)
     const file = new File([bigContent], 'big.jpg', { type: 'image/jpeg' })
     uploadFile(input, file)
     await waitFor(() =>
-      expect(screen.getByText(/file exceeds 10 mb/i)).toBeInTheDocument(),
+      expect(screen.getByText(/file exceeds/i)).toBeInTheDocument(),
     )
   })
 

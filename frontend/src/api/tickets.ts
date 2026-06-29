@@ -89,17 +89,18 @@ export function useTranslateNames(names: string[]) {
   })
 }
 
+export async function uploadReceiptFile(file: File): Promise<OCRDraft> {
+  const formData = new FormData()
+  formData.append('files', file)
+  const response = await apiClient.post<OCRDraft>('/tickets/upload', formData, {
+    headers: { 'Content-Type': undefined },
+  })
+  return response.data
+}
+
 export function useUploadReceipt() {
   return useMutation({
-    mutationFn: async (files: File | File[]): Promise<OCRDraft> => {
-      const fileList = Array.isArray(files) ? files : [files]
-      const formData = new FormData()
-      for (const f of fileList) formData.append('files', f)
-      const response = await apiClient.post<OCRDraft>('/tickets/upload', formData, {
-        headers: { 'Content-Type': undefined },
-      })
-      return response.data
-    },
+    mutationFn: (file: File) => uploadReceiptFile(file),
   })
 }
 
