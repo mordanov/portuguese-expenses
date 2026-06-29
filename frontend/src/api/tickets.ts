@@ -95,7 +95,9 @@ export function useUploadReceipt() {
       const fileList = Array.isArray(files) ? files : [files]
       const formData = new FormData()
       for (const f of fileList) formData.append('files', f)
-      const response = await apiClient.post<OCRDraft>('/tickets/upload', formData)
+      const response = await apiClient.post<OCRDraft>('/tickets/upload', formData, {
+        headers: { 'Content-Type': undefined },
+      })
       return response.data
     },
   })
