@@ -28,6 +28,9 @@ function itemDisplayName(row: ItemizedRow, i18n: { language: string }): { primar
   return { primary: row.item_name, secondary: null }
 }
 
+type SortField = 'date' | 'price'
+type SortDir = 'asc' | 'desc'
+
 export default function ReportsPage() {
   const { t, i18n } = useTranslation()
   const [tab, setTab] = useState<Tab>('summary')
@@ -42,10 +45,25 @@ export default function ReportsPage() {
   const [appliedTo, setAppliedTo] = useState(DEFAULT.to)
   const [appliedMember, setAppliedMember] = useState('')
 
+  // Itemized local controls
+  const [storeFilter, setStoreFilter] = useState('')
+  const [sortField, setSortField] = useState<SortField>('date')
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
+
   function apply() {
     setAppliedFrom(fromInput)
     setAppliedTo(toInput)
     setAppliedMember(memberInput)
+  }
+
+  function toggleSort(field: SortField) {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortField(field); setSortDir('desc') }
+  }
+
+  function sortArrow(field: SortField) {
+    if (sortField !== field) return <span className="text-gray-300 ml-1">↕</span>
+    return <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>
   }
 
   const { data: membersData } = useMembers()
@@ -154,48 +172,77 @@ export default function ReportsPage() {
           {appliedMember && (!itemized || itemized.length === 0) && (
             <p className="text-gray-500 text-center py-8">{t('reports.itemized.empty')}</p>
           )}
-          {appliedMember && itemized && itemized.length > 0 && (
-            <div>
-              <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('tickets.store')}</th>
-                      <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('review.name')}</th>
-                      <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('tickets.date')}</th>
-                      <th className="text-right px-4 py-3 text-gray-600 font-medium">{t('review.price')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {itemized.map((row, idx) => {
-                      const { primary, secondary } = itemDisplayName(row, i18n)
-                      return (
-                        <tr key={idx} className="border-t border-gray-100 bg-white">
-                          <td className="px-4 py-3 text-gray-700">{row.store_name}</td>
-                          <td className="px-4 py-3">
-                            <span className="text-gray-800">{primary}</span>
-                            {secondary && (
-                              <span className="block text-xs text-gray-400">{secondary}</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-gray-500">{row.purchased_at.slice(0, 10)}</td>
-                          <td className="px-4 py-3 text-right">
-                            <MoneyDisplay amount={row.member_cost} className="font-medium" />
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+          {appliedMember && itemized && itemized.length > 0 && (() => {
+            const stores = Array.from(new Set(itemized.map(r => r.store_name))).sort()
+            const filtered = itemized.filter(r => !storeFilter || r.store_name === storeFilter)
+            const sorted = [...filtered].sort((a, b) => {
+              const mul = sortDir === 'asc' ? 1 : -1
+              if (sortField === 'date') return mul * a.purchased_at.localeCompare(b.purchased_at)
+              return mul * (parseFloat(a.member_cost) - parseFloat(b.member_cost))
+            })
+            const total = filtered.reduce((s, r) => s + Math.round(parseFloat(r.member_cost) * 100), 0) / 100
+            return (
+              <div>
+                <div className="flex items-center gap-3 mb-3">
+                  <label className="text-xs text-gray-500">{t('tickets.store')}</label>
+                  <select
+                    value={storeFilter}
+                    onChange={e => setStoreFilter(e.target.value)}
+                    className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
+                  >
+                    <option value="">{t('reports.itemized.allStores')}</option>
+                    {stores.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('tickets.store')}</th>
+                        <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('review.name')}</th>
+                        <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('review.category')}</th>
+                        <th
+                          className="text-left px-4 py-3 text-gray-600 font-medium cursor-pointer select-none hover:text-pt-green"
+                          onClick={() => toggleSort('date')}
+                        >
+                          {t('tickets.date')}{sortArrow('date')}
+                        </th>
+                        <th
+                          className="text-right px-4 py-3 text-gray-600 font-medium cursor-pointer select-none hover:text-pt-green"
+                          onClick={() => toggleSort('price')}
+                        >
+                          {t('review.price')}{sortArrow('price')}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sorted.map((row, idx) => {
+                        const { primary, secondary } = itemDisplayName(row, i18n)
+                        return (
+                          <tr key={idx} className="border-t border-gray-100 bg-white">
+                            <td className="px-4 py-3 text-gray-700">{row.store_name}</td>
+                            <td className="px-4 py-3">
+                              <span className="text-gray-800">{primary}</span>
+                              {secondary && <span className="block text-xs text-gray-400">{secondary}</span>}
+                            </td>
+                            <td className="px-4 py-3 text-gray-500 text-xs">{row.category_name ?? '—'}</td>
+                            <td className="px-4 py-3 text-gray-500">{row.purchased_at.slice(0, 10)}</td>
+                            <td className="px-4 py-3 text-right">
+                              <MoneyDisplay amount={row.member_cost} className="font-medium" />
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-right text-sm font-semibold text-gray-700 mt-3">
+                  {t('reports.itemized.total')}:{' '}
+                  <span className="text-pt-green">€{total.toFixed(2)}</span>
+                </p>
               </div>
-              <p className="text-right text-sm font-semibold text-gray-700 mt-3">
-                {t('reports.itemized.total')}:{' '}
-                <span className="text-pt-green">
-                  €{(itemized.reduce((s, r) => s + Math.round(parseFloat(r.member_cost) * 100), 0) / 100).toFixed(2)}
-                </span>
-              </p>
-            </div>
-          )}
+            )
+          })()}
         </div>
       )}
 

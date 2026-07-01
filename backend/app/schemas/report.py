@@ -31,6 +31,7 @@ class ItemizedItem(BaseModel):
     translation_en: str | None
     translation_ru: str | None
     translation_pt: str | None
+    category_name: str | None
     discounted_price: str
     member_cost: str
 

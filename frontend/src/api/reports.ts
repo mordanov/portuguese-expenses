@@ -15,6 +15,7 @@ export interface ItemizedRow {
   translation_en: string | null
   translation_ru: string | null
   translation_pt: string | null
+  category_name: string | null
   member_cost: string
 }
 
@@ -66,6 +67,7 @@ export function useItemizedReport(params: { from_date: string; to_date: string; 
             translation_en: string | null
             translation_ru: string | null
             translation_pt: string | null
+            category_name: string | null
             discounted_price: string
             member_cost: string
           }[]
@@ -82,6 +84,7 @@ export function useItemizedReport(params: { from_date: string; to_date: string; 
             translation_en: item.translation_en,
             translation_ru: item.translation_ru,
             translation_pt: item.translation_pt,
+            category_name: item.category_name,
             member_cost: item.member_cost,
           })
         }

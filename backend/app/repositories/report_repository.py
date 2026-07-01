@@ -71,10 +71,12 @@ class ReportRepository:
                 Item.discounted_price.label("discounted_price"),
                 Item.position,
                 alloc_count_subq.c.cnt.label("cnt"),
+                Category.name.label("category_name"),
             )
             .join(Allocation, Allocation.item_id == Item.id)
             .join(Ticket, Ticket.id == Item.ticket_id)
             .join(alloc_count_subq, alloc_count_subq.c.item_id == Item.id)
+            .outerjoin(Category, Category.id == Item.category_id)
             .where(Allocation.member_id == member_id)
             .order_by(Ticket.purchased_at.desc(), Ticket.id, Item.position)
         )
@@ -92,6 +94,7 @@ class ReportRepository:
                 "translation_ru": row.translation_ru,
                 "translation_pt": row.translation_pt,
                 "discounted_price": row.discounted_price,
+                "category_name": row.category_name,
                 "member_cost": Decimal(str(row.discounted_price)) / Decimal(str(row.cnt)),
             }
             for row in rows
