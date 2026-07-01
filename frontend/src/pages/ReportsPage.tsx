@@ -9,15 +9,16 @@ import MoneyDisplay from '../components/shared/MoneyDisplay'
 
 type Tab = 'summary' | 'itemized' | 'categories' | 'payments'
 
-function currentMonthRange() {
-  const now = new Date()
-  const from = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
-  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-  const to = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
-  return { from, to }
+function defaultRange() {
+  const to = new Date()
+  const from = new Date(to)
+  from.setDate(from.getDate() - 14)
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  return { from: fmt(from), to: fmt(to) }
 }
 
-const DEFAULT = currentMonthRange()
+const DEFAULT = defaultRange()
 
 function itemDisplayName(row: ItemizedRow, i18n: { language: string }): { primary: string; secondary: string | null } {
   const lang = i18n.language.slice(0, 2)

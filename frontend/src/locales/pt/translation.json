@@ -207,7 +207,8 @@
     "itemized": {
       "selectMember": "Seleccionar membro",
       "empty": "Sem itens para o membro e período seleccionados.",
-      "total": "Total"
+      "total": "Total",
+      "allStores": "Todas as lojas"
     },
     "payments": {
       "tab": "Pagamentos",

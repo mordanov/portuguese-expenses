@@ -207,7 +207,8 @@
     "itemized": {
       "selectMember": "Select a member",
       "empty": "No items for selected member and period.",
-      "total": "Total"
+      "total": "Total",
+      "allStores": "All stores"
     },
     "payments": {
       "tab": "Payments",
