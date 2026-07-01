@@ -60,6 +60,9 @@ class ReportService:
             tickets_map[tid]["items"].append(
                 ItemizedItem(
                     name=row["item_name"],
+                    translation_en=row["translation_en"],
+                    translation_ru=row["translation_ru"],
+                    translation_pt=row["translation_pt"],
                     discounted_price=str(Decimal(str(row["discounted_price"])).quantize(Decimal("0.01"))),
                     member_cost=str(cost),
                 )

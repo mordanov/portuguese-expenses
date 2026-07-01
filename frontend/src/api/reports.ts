@@ -12,7 +12,10 @@ export interface ItemizedRow {
   store_name: string
   purchased_at: string
   item_name: string
-  discounted_price: string
+  translation_en: string | null
+  translation_ru: string | null
+  translation_pt: string | null
+  member_cost: string
 }
 
 export interface CategoryRow {
@@ -58,7 +61,14 @@ export function useItemizedReport(params: { from_date: string; to_date: string; 
       const response = await apiClient.get<{
         tickets: {
           ticket: { id: string; store_name: string; purchased_at: string }
-          items: { name: string; discounted_price: string }[]
+          items: {
+            name: string
+            translation_en: string | null
+            translation_ru: string | null
+            translation_pt: string | null
+            discounted_price: string
+            member_cost: string
+          }[]
         }[]
       }>('/reports/itemized', { params })
       const rows: ItemizedRow[] = []
@@ -69,7 +79,10 @@ export function useItemizedReport(params: { from_date: string; to_date: string; 
             store_name: t.ticket.store_name,
             purchased_at: t.ticket.purchased_at,
             item_name: item.name,
-            discounted_price: item.discounted_price,
+            translation_en: item.translation_en,
+            translation_ru: item.translation_ru,
+            translation_pt: item.translation_pt,
+            member_cost: item.member_cost,
           })
         }
       }

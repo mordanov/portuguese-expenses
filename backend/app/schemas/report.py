@@ -28,6 +28,9 @@ class SummaryResponse(BaseModel):
 
 class ItemizedItem(BaseModel):
     name: str
+    translation_en: str | None
+    translation_ru: str | None
+    translation_pt: str | None
     discounted_price: str
     member_cost: str
 

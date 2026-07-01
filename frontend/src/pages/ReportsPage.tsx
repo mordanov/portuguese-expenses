@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { ItemizedRow } from '../api/reports'
 import { useSummaryReport, useItemizedReport, useCategoryReport, usePaymentsReport } from '../api/reports'
 import { useMembers } from '../api/members'
 import SummaryTable from '../components/reports/SummaryTable'
@@ -18,8 +19,17 @@ function currentMonthRange() {
 
 const DEFAULT = currentMonthRange()
 
+function itemDisplayName(row: ItemizedRow, i18n: { language: string }): { primary: string; secondary: string | null } {
+  const lang = i18n.language.slice(0, 2)
+  const translation = lang === 'ru' ? row.translation_ru : lang === 'pt' ? row.translation_pt : row.translation_en
+  if (translation && translation !== row.item_name) {
+    return { primary: translation, secondary: row.item_name }
+  }
+  return { primary: row.item_name, secondary: null }
+}
+
 export default function ReportsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [tab, setTab] = useState<Tab>('summary')
 
   // Staged values (what the user is editing)
@@ -157,23 +167,31 @@ export default function ReportsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {itemized.map((row, idx) => (
-                      <tr key={idx} className="border-t border-gray-100 bg-white">
-                        <td className="px-4 py-3 text-gray-700">{row.store_name}</td>
-                        <td className="px-4 py-3">{row.item_name}</td>
-                        <td className="px-4 py-3 text-gray-500">{row.purchased_at.slice(0, 10)}</td>
-                        <td className="px-4 py-3 text-right">
-                          <MoneyDisplay amount={row.discounted_price} className="font-medium" />
-                        </td>
-                      </tr>
-                    ))}
+                    {itemized.map((row, idx) => {
+                      const { primary, secondary } = itemDisplayName(row, i18n)
+                      return (
+                        <tr key={idx} className="border-t border-gray-100 bg-white">
+                          <td className="px-4 py-3 text-gray-700">{row.store_name}</td>
+                          <td className="px-4 py-3">
+                            <span className="text-gray-800">{primary}</span>
+                            {secondary && (
+                              <span className="block text-xs text-gray-400">{secondary}</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-gray-500">{row.purchased_at.slice(0, 10)}</td>
+                          <td className="px-4 py-3 text-right">
+                            <MoneyDisplay amount={row.member_cost} className="font-medium" />
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
               <p className="text-right text-sm font-semibold text-gray-700 mt-3">
                 {t('reports.itemized.total')}:{' '}
                 <span className="text-pt-green">
-                  €{(itemized.reduce((s, r) => s + Math.round(parseFloat(r.discounted_price) * 100), 0) / 100).toFixed(2)}
+                  €{(itemized.reduce((s, r) => s + Math.round(parseFloat(r.member_cost) * 100), 0) / 100).toFixed(2)}
                 </span>
               </p>
             </div>
