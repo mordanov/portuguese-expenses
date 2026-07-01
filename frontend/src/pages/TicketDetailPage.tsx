@@ -396,7 +396,7 @@ export default function TicketDetailPage() {
       </div>
 
       {/* Add new item */}
-      {newItem ? (
+      {admin && (newItem ? (
         <div className="bg-white border border-pt-green rounded-xl p-4 shadow-sm space-y-3">
           <h3 className="text-sm font-semibold text-gray-700">{t('review.addItem')}</h3>
           <div className="flex gap-2">
@@ -481,7 +481,7 @@ export default function TicketDetailPage() {
         >
           + {t('review.addItem')}
         </button>
-      )}
+      ))}
     </div>
   )
 }
