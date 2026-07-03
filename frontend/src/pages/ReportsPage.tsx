@@ -131,7 +131,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-6">
         {TABS.map((t_) => (
           <button
             key={t_}
@@ -195,15 +195,15 @@ export default function ReportsPage() {
                     {stores.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
-                <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+                <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('tickets.store')}</th>
+                        <th className="text-left px-4 py-3 text-gray-600 font-medium whitespace-nowrap hidden sm:table-cell">{t('tickets.store')}</th>
                         <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('review.name')}</th>
-                        <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('review.category')}</th>
+                        <th className="text-left px-4 py-3 text-gray-600 font-medium hidden sm:table-cell">{t('review.category')}</th>
                         <th
-                          className="text-left px-4 py-3 text-gray-600 font-medium cursor-pointer select-none hover:text-pt-green"
+                          className="text-left px-4 py-3 text-gray-600 font-medium cursor-pointer select-none hover:text-pt-green whitespace-nowrap hidden sm:table-cell"
                           onClick={() => toggleSort('date')}
                         >
                           {t('tickets.date')}{sortArrow('date')}
@@ -221,13 +221,14 @@ export default function ReportsPage() {
                         const { primary, secondary } = itemDisplayName(row, i18n)
                         return (
                           <tr key={idx} className="border-t border-gray-100 bg-white">
-                            <td className="px-4 py-3 text-gray-700">{row.store_name}</td>
+                            <td className="px-4 py-3 text-gray-700 whitespace-nowrap hidden sm:table-cell">{row.store_name}</td>
                             <td className="px-4 py-3">
                               <span className="text-gray-800">{primary}</span>
                               {secondary && <span className="block text-xs text-gray-400">{secondary}</span>}
+                              <span className="block text-xs text-gray-400 sm:hidden">{row.store_name} · {row.purchased_at.slice(0, 10)}</span>
                             </td>
-                            <td className="px-4 py-3 text-gray-500 text-xs">{row.category_name ?? '—'}</td>
-                            <td className="px-4 py-3 text-gray-500">{row.purchased_at.slice(0, 10)}</td>
+                            <td className="px-4 py-3 text-gray-500 text-xs hidden sm:table-cell">{row.category_name ?? '—'}</td>
+                            <td className="px-4 py-3 text-gray-500 whitespace-nowrap hidden sm:table-cell">{row.purchased_at.slice(0, 10)}</td>
                             <td className="px-4 py-3 text-right">
                               <MoneyDisplay amount={row.member_cost} className="font-medium" />
                             </td>
@@ -268,25 +269,25 @@ export default function ReportsPage() {
           ? <p className="text-gray-500 text-center py-8">{t('reports.payments.empty')}</p>
           : (
             <div>
-              <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+              <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('reports.payments.date')}</th>
-                      <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('reports.payments.from')}</th>
-                      <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('reports.payments.to')}</th>
-                      <th className="text-left px-4 py-3 text-gray-600 font-medium">{t('reports.payments.note')}</th>
-                      <th className="text-right px-4 py-3 text-gray-600 font-medium">{t('reports.payments.amount')}</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium whitespace-nowrap">{t('reports.payments.date')}</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium whitespace-nowrap">{t('reports.payments.from')}</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium whitespace-nowrap">{t('reports.payments.to')}</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium whitespace-nowrap hidden sm:table-cell">{t('reports.payments.note')}</th>
+                      <th className="text-right px-4 py-3 text-gray-600 font-medium whitespace-nowrap">{t('reports.payments.amount')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {paymentsData.payments.map((p) => (
                       <tr key={p.id} className="border-t border-gray-100 bg-white">
-                        <td className="px-4 py-3 text-gray-500">{p.paid_at.slice(0, 10)}</td>
+                        <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{p.paid_at.slice(0, 10)}</td>
                         <td className="px-4 py-3 font-medium text-gray-800">{p.payer_name}</td>
                         <td className="px-4 py-3 font-medium text-gray-800">{p.payee_name}</td>
-                        <td className="px-4 py-3 text-gray-400 italic">{p.note ?? '—'}</td>
-                        <td className="px-4 py-3 text-right font-bold text-pt-green">€{parseFloat(p.amount).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-gray-400 italic hidden sm:table-cell">{p.note ?? '—'}</td>
+                        <td className="px-4 py-3 text-right font-bold text-pt-green whitespace-nowrap">€{parseFloat(p.amount).toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>

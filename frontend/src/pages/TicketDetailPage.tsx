@@ -29,6 +29,7 @@ export default function TicketDetailPage() {
   const { mutateAsync: deleteTicket } = useDeleteTicket()
 
   const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   // Header edit state
   const [storeName, setStoreName] = useState('')
@@ -83,6 +84,8 @@ export default function TicketDetailPage() {
 
   async function saveAll() {
     if (!ticket) return
+    setSaving(true)
+    try {
     await updateTicket({
       id: ticket.id,
       data: {
@@ -113,6 +116,9 @@ export default function TicketDetailPage() {
       })
     )
     setEditing(false)
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function handleDelete() {
@@ -177,10 +183,10 @@ export default function TicketDetailPage() {
                 </button>
                 <button
                   onClick={saveAll}
-                  disabled={savingHeader}
+                  disabled={saving}
                   className="px-3 py-1.5 text-sm bg-pt-green text-white rounded-lg hover:bg-green-800 transition-colors disabled:opacity-60"
                 >
-                  {savingHeader ? t('confirm.saving') : t('common.save')}
+                  {saving ? t('confirm.saving') : t('common.save')}
                 </button>
               </>
             ) : (
