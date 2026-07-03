@@ -7,6 +7,7 @@ export interface AppUser {
   role: 'admin' | 'user'
   is_active: boolean
   created_at: string
+  last_login_at: string | null
 }
 
 export interface UserListResponse {

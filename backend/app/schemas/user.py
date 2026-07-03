@@ -10,6 +10,7 @@ class UserResponse(BaseModel):
     role: str
     is_active: bool
     created_at: datetime
+    last_login_at: datetime | None = None
 
     model_config = {"from_attributes": True}
 

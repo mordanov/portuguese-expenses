@@ -263,7 +263,9 @@
     "confirmBlock": "Bloquear este utilizador?",
     "confirmBlockDesc": "Não poderá iniciar sessão.",
     "selfDemoteError": "Não pode reduzir a sua própria função",
-    "selfBlockError": "Não pode bloquear-se a si próprio"
+    "selfBlockError": "Não pode bloquear-se a si próprio",
+    "lastLogin": "Último acesso",
+    "neverLoggedIn": "Nunca"
   },
   "common": {
     "loading": "A carregar…",

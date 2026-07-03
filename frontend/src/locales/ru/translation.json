@@ -265,7 +265,9 @@
     "confirmBlock": "Заблокировать пользователя?",
     "confirmBlockDesc": "Он не сможет войти в систему.",
     "selfDemoteError": "Нельзя понизить свою роль",
-    "selfBlockError": "Нельзя заблокировать себя"
+    "selfBlockError": "Нельзя заблокировать себя",
+    "lastLogin": "Последний вход",
+    "neverLoggedIn": "Ни разу"
   },
   "common": {
     "loading": "Загрузка…",

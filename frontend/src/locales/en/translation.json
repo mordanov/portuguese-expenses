@@ -263,7 +263,9 @@
     "confirmBlock": "Block this user?",
     "confirmBlockDesc": "They will not be able to log in.",
     "selfDemoteError": "You cannot demote yourself",
-    "selfBlockError": "You cannot block yourself"
+    "selfBlockError": "You cannot block yourself",
+    "lastLogin": "Last login",
+    "neverLoggedIn": "Never"
   },
   "common": {
     "loading": "Loading…",

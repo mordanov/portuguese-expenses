@@ -126,6 +126,11 @@ export default function UsersPage() {
                   {' · '}
                   {user.is_active ? t('users.active') : t('users.blocked')}
                 </p>
+                <p className="text-xs text-gray-300 mt-0.5">
+                  {t('users.lastLogin')}: {user.last_login_at
+                    ? new Date(user.last_login_at).toLocaleString()
+                    : t('users.neverLoggedIn')}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
