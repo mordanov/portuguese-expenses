@@ -8,6 +8,7 @@
     "reports": "Relatórios",
     "balances": "Saldos",
     "users": "Utilizadores",
+    "settings": "Definições",
     "logout": "Sair"
   },
   "auth": {

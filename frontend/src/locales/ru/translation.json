@@ -8,6 +8,7 @@
     "reports": "Отчёты",
     "balances": "Баланс",
     "users": "Пользователи",
+    "settings": "Настройки",
     "logout": "Выйти"
   },
   "auth": {

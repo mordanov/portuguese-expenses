@@ -8,6 +8,7 @@
     "reports": "Reports",
     "balances": "Balances",
     "users": "Users",
+    "settings": "Settings",
     "logout": "Logout"
   },
   "auth": {
