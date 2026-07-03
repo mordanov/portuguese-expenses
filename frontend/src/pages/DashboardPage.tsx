@@ -41,11 +41,11 @@ export default function DashboardPage() {
       <h1 className="text-2xl font-bold text-gray-800 mb-6">{t('dashboard.title')}</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <Link to="/tickets" className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:border-pt-green transition-colors">
           <p className="text-sm text-gray-500 mb-1">{t('dashboard.totalTickets')}</p>
           <p className="text-3xl font-bold text-pt-green">{ticketsLoading ? '…' : totalTickets}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        </Link>
+        <Link to="/balances" className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:border-pt-green transition-colors">
           <p className="text-sm text-gray-500 mb-1">{t('dashboard.outstandingBalance')}</p>
           {balancesLoading ? (
             <p className="text-gray-400">…</p>
@@ -54,11 +54,11 @@ export default function DashboardPage() {
           ) : (
             <p className="text-3xl font-bold text-pt-red">{computed.length}</p>
           )}
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        </Link>
+        <Link to="/reports" className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:border-pt-green transition-colors">
           <p className="text-sm text-gray-500 mb-1">{t('members.title')}</p>
           <p className="text-3xl font-bold text-gray-700">{activeMembers.length}</p>
-        </div>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
