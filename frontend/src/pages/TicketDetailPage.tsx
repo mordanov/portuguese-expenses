@@ -22,7 +22,7 @@ export default function TicketDetailPage() {
   const { data: ticket, isLoading } = useTicket(id ?? '')
   const { data: membersData } = useMembers({ active_only: true })
   const { data: categoriesData } = useCategories()
-  const { mutateAsync: updateTicket, isPending: savingHeader } = useUpdateTicket()
+  const { mutateAsync: updateTicket } = useUpdateTicket()
   const { mutateAsync: updateItem } = useUpdateItem(id ?? '')
   const { mutateAsync: replaceAllocations } = useReplaceAllocations(id ?? '')
   const { mutateAsync: addItem, isPending: addingItem } = useAddItem(id ?? '')
