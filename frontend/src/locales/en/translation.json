@@ -231,7 +231,9 @@
     "recentTickets": "Recent Tickets",
     "viewAll": "View all",
     "noTickets": "No tickets yet.",
-    "noBalances": "All settled up!"
+    "noBalances": "All settled up!",
+    "owes": "Owes",
+    "owed": "Is owed"
   },
   "users": {
     "title": "Users",

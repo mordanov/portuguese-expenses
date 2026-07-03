@@ -231,7 +231,9 @@
     "recentTickets": "Talões Recentes",
     "viewAll": "Ver todos",
     "noTickets": "Sem talões.",
-    "noBalances": "Tudo liquidado!"
+    "noBalances": "Tudo liquidado!",
+    "owes": "Deve",
+    "owed": "É devido"
   },
   "users": {
     "title": "Utilizadores",
