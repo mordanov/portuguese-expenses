@@ -77,7 +77,7 @@ def upgrade() -> None:
     )
 
     # Step 13: Drop old unique constraint on categories.name
-    op.drop_constraint('categories_name_key', 'categories', type_='unique')
+    op.drop_constraint('uq_categories_name', 'categories', type_='unique')
 
     # Step 14: Add composite unique constraint (name, project_id)
     op.create_unique_constraint('uq_category_name_project', 'categories', ['name', 'project_id'])
@@ -109,7 +109,7 @@ def downgrade() -> None:
     op.drop_constraint('uq_category_name_project', 'categories', type_='unique')
 
     # Reverse step 13
-    op.create_unique_constraint('categories_name_key', 'categories', ['name'])
+    op.create_unique_constraint('uq_categories_name', 'categories', ['name'])
 
     # Reverse step 11 (drops project_members)
     op.drop_table('project_members')

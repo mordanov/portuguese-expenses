@@ -3,6 +3,7 @@ import apiClient from './client'
 export interface ProjectPublic {
   id: string
   name: string
+  description: string | null
   bg_color: string
   text_color: string
   accent_color: string
@@ -12,6 +13,7 @@ export interface ProjectPublic {
 export interface Project {
   id: string
   name: string
+  description: string | null
   default_language: string
   bg_color: string
   text_color: string
@@ -22,6 +24,7 @@ export interface Project {
 
 export interface ProjectCreate {
   name: string
+  description?: string | null
   default_language: string
   bg_color: string
   text_color: string
@@ -30,6 +33,7 @@ export interface ProjectCreate {
 
 export interface ProjectUpdate {
   name?: string
+  description?: string | null
   default_language?: string
   bg_color?: string
   text_color?: string

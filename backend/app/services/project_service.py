@@ -45,6 +45,7 @@ class ProjectService:
             raise HTTPException(status_code=409, detail="Project name already exists")
         project = Project(
             name=data.name,
+            description=data.description,
             default_language=data.default_language,
             bg_color=data.bg_color,
             text_color=data.text_color,
@@ -65,6 +66,8 @@ class ProjectService:
             if conflict and conflict.id != project_id:
                 raise HTTPException(status_code=409, detail="Project name already exists")
             project.name = data.name
+        if "description" in data.model_fields_set:
+            project.description = data.description
         if data.default_language is not None:
             project.default_language = data.default_language
         if data.bg_color is not None:

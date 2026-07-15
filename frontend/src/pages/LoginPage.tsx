@@ -43,7 +43,23 @@ export default function LoginPage() {
     }
   }, [publicProjects, selectedProjectId])
 
-  const showProjectChooser = publicProjects.length > 1
+  // Apply project colors to login screen when selection changes
+  useEffect(() => {
+    const project = publicProjects.find((p) => p.id === selectedProjectId)
+    const root = document.documentElement
+    if (project) {
+      root.style.setProperty('--project-bg', project.bg_color)
+      root.style.setProperty('--project-text', project.text_color)
+      root.style.setProperty('--project-accent', project.accent_color)
+    } else {
+      root.style.removeProperty('--project-bg')
+      root.style.removeProperty('--project-text')
+      root.style.removeProperty('--project-accent')
+    }
+  }, [selectedProjectId, publicProjects])
+
+  const selectedProject = publicProjects.find((p) => p.id === selectedProjectId) ?? null
+  const showProjectChooser = publicProjects.length > 0
 
   function handleLocaleChange(code: string) {
     i18n.changeLanguage(code)
@@ -92,6 +108,9 @@ export default function LoginPage() {
           <div className="text-5xl mb-3">🇵🇹</div>
           <h1 className="text-2xl font-bold text-pt-green">{t('auth.loginSubtitle')}</h1>
           <p className="text-gray-500 text-sm mt-1">{t('auth.loginTitle')}</p>
+          {selectedProject?.description && (
+            <p className="text-gray-400 text-sm mt-2 italic">{selectedProject.description}</p>
+          )}
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">

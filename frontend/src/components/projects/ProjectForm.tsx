@@ -16,6 +16,7 @@ const LANGUAGES = [
 
 const schema = z.object({
   name: z.string().min(1, 'required'),
+  description: z.string().max(500).optional().nullable(),
   default_language: z.string().min(1, 'required'),
   bg_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'invalid hex'),
   text_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'invalid hex'),
@@ -61,6 +62,7 @@ export default function ProjectForm({ project, onSubmit, onCancel }: ProjectForm
     resolver: zodResolver(schema),
     defaultValues: {
       name: project?.name ?? '',
+      description: project?.description ?? '',
       default_language: project?.default_language ?? 'pt',
       bg_color: project?.bg_color ?? '#006600',
       text_color: project?.text_color ?? '#FFFFFF',
@@ -116,6 +118,19 @@ export default function ProjectForm({ project, onSubmit, onCancel }: ProjectForm
           placeholder="France-2026"
         />
         {errors.name && <p className="text-red-600 text-xs mt-1">{t('auth.required')}</p>}
+      </div>
+
+      {/* Description */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {t('projects.description', 'Description')}
+        </label>
+        <input
+          {...register('description')}
+          type="text"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pt-green text-sm"
+          placeholder={t('projects.descriptionPlaceholder', 'Portuguese drunk sailors')}
+        />
       </div>
 
       {/* Language */}

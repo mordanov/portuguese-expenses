@@ -14,6 +14,7 @@ def _validate_hex_color(v: str | None) -> str | None:
 
 class ProjectCreate(BaseModel):
     name: str
+    description: str | None = None
     default_language: str = "pt"
     bg_color: str = "#006600"
     text_color: str = "#FFFFFF"
@@ -28,6 +29,7 @@ class ProjectCreate(BaseModel):
 
 class ProjectUpdate(BaseModel):
     name: str | None = None
+    description: str | None = None
     default_language: str | None = None
     bg_color: str | None = None
     text_color: str | None = None
@@ -42,6 +44,7 @@ class ProjectUpdate(BaseModel):
 class ProjectResponse(BaseModel):
     id: uuid.UUID
     name: str
+    description: str | None
     default_language: str
     bg_color: str
     text_color: str
@@ -55,6 +58,7 @@ class ProjectResponse(BaseModel):
 class ProjectPublicResponse(BaseModel):
     id: uuid.UUID
     name: str
+    description: str | None
     bg_color: str
     text_color: str
     accent_color: str

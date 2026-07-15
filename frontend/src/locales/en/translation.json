@@ -1,6 +1,6 @@
 {
   "nav": {
-    "title": "Portuguese Drunk Sailors",
+    "title": "Slightly drunk travelers",
     "dashboard": "Dashboard",
     "tickets": "Tickets",
     "members": "Members",
@@ -19,7 +19,7 @@
     "invalidCredentials": "Invalid username or password",
     "required": "This field is required",
     "loginTitle": "Sign In",
-    "loginSubtitle": "Portuguese Drunk Sailors"
+    "loginSubtitle": "Slightly drunk travelers"
   },
   "members": {
     "title": "Family Members",

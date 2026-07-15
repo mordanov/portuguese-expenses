@@ -23,8 +23,14 @@ async def get_user_by_username(session: AsyncSession, username: str) -> AppUser 
     return result.scalar_one_or_none()
 
 
-async def create_user(session: AsyncSession, username: str, password_hash: str, role: str) -> AppUser:
-    user = AppUser(username=username, password_hash=password_hash, role=role)
+async def create_user(
+    session: AsyncSession,
+    username: str,
+    password_hash: str,
+    role: str,
+    project_id: "uuid.UUID | None" = None,
+) -> AppUser:
+    user = AppUser(username=username, password_hash=password_hash, role=role, project_id=project_id)
     session.add(user)
     await session.flush()
     return user
@@ -37,6 +43,8 @@ async def update_user(
     password_hash: str | None = None,
     role: str | None = None,
     is_active: bool | None = None,
+    project_id: "uuid.UUID | None" = None,
+    set_project_id: bool = False,
 ) -> AppUser:
     if username is not None:
         user.username = username
@@ -46,5 +54,7 @@ async def update_user(
         user.role = role
     if is_active is not None:
         user.is_active = is_active
+    if set_project_id:
+        user.project_id = project_id
     await session.flush()
     return user

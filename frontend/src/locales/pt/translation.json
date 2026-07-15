@@ -1,6 +1,6 @@
 {
   "nav": {
-    "title": "Marinheiros Bêbados Portugueses",
+    "title": "Viajantes ligeiramente embriagados",
     "dashboard": "Painel",
     "tickets": "Talões",
     "members": "Membros",
@@ -19,7 +19,7 @@
     "invalidCredentials": "Utilizador ou palavra-passe inválidos",
     "required": "Campo obrigatório",
     "loginTitle": "Iniciar Sessão",
-    "loginSubtitle": "Marinheiros Bêbados Portugueses"
+    "loginSubtitle": "Viajantes ligeiramente embriagados"
   },
   "members": {
     "title": "Membros da Família",

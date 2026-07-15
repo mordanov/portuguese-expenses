@@ -13,6 +13,7 @@ class Project(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
     default_language: Mapped[str] = mapped_column(String(10), nullable=False, default="pt")
     bg_color: Mapped[str] = mapped_column(String(7), nullable=False, default="#006600")
     text_color: Mapped[str] = mapped_column(String(7), nullable=False, default="#FFFFFF")
