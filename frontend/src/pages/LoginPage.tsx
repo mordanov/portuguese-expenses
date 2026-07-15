@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { login } from '../api/auth'
-import { getPublicProjects } from '../api/projects'
+import { getPublicProjects, ProjectPublic } from '../api/projects'
 import { useProject } from '../context/ProjectContext'
 import ProjectChooser from '../components/projects/ProjectChooser'
 import { isAxiosError } from 'axios'
@@ -31,16 +31,17 @@ export default function LoginPage() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [selectedProjectId, setSelectedProjectId] = useState<string>('')
 
-  const { data: publicProjects = [] } = useQuery({
+  const { data: publicProjects = [] } = useQuery<ProjectPublic[]>({
     queryKey: ['projects-public'],
     queryFn: getPublicProjects,
-    onSuccess: (projects) => {
-      if (projects.length > 0 && !selectedProjectId) {
-        const first = projects.find((p) => p.status === 'open') ?? projects[0]
-        setSelectedProjectId(first.id)
-      }
-    },
   })
+
+  useEffect(() => {
+    if (publicProjects.length > 0 && !selectedProjectId) {
+      const first = publicProjects.find((p) => p.status === 'open') ?? publicProjects[0]
+      setSelectedProjectId(first.id)
+    }
+  }, [publicProjects, selectedProjectId])
 
   const showProjectChooser = publicProjects.length > 1
 

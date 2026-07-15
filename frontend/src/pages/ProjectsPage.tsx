@@ -187,7 +187,7 @@ export default function ProjectsPage() {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('projects.new')}</h2>
             <ProjectForm
-              onSubmit={(data) => createMutation.mutateAsync(data as ProjectCreate)}
+              onSubmit={async (data) => { await createMutation.mutateAsync(data as ProjectCreate) }}
               onCancel={() => setShowForm(false)}
             />
           </div>
@@ -201,9 +201,7 @@ export default function ProjectsPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('projects.edit')}</h2>
             <ProjectForm
               project={editingProject}
-              onSubmit={(data) =>
-                updateMutation.mutateAsync({ id: editingProject.id, data: data as ProjectUpdate })
-              }
+              onSubmit={async (data) => { await updateMutation.mutateAsync({ id: editingProject.id, data: data as ProjectUpdate }) }}
               onCancel={() => setEditingProject(null)}
             />
           </div>
