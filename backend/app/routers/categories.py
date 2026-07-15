@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
-from app.dependencies import get_current_user, require_admin
+from app.dependencies import get_current_project_id, get_current_user, require_admin, require_open_project
 from app.schemas.category import CategoryCreate, CategoryListResponse, CategoryResponse, CategoryUpdate
 from app.services.category_service import CategoryReferencedError, CategoryService
 
@@ -17,9 +17,10 @@ async def list_categories(
     page_size: int = Query(default=20, ge=1, le=100),
     session: AsyncSession = Depends(get_async_session),
     _: str = Depends(get_current_user),
+    project_id: uuid.UUID | None = Depends(get_current_project_id),
 ) -> CategoryListResponse:
     service = CategoryService(session)
-    categories, total = await service.list_categories(page=page, page_size=page_size)
+    categories, total = await service.list_categories(page=page, page_size=page_size, project_id=project_id)
     return CategoryListResponse(
         items=[CategoryResponse.model_validate(c) for c in categories],
         total=total,
@@ -28,18 +29,19 @@ async def list_categories(
     )
 
 
-@router.post("", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin)])
+@router.post("", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin), Depends(require_open_project)])
 async def create_category(
     body: CategoryCreate,
     session: AsyncSession = Depends(get_async_session),
+    project_id: uuid.UUID = Depends(get_current_project_id),
 ) -> CategoryResponse:
     service = CategoryService(session)
-    category = await service.create_category(body.name, body.color)
+    category = await service.create_category(body.name, body.color, project_id=project_id)
     await session.commit()
     return CategoryResponse.model_validate(category)
 
 
-@router.put("/{category_id}", response_model=CategoryResponse, dependencies=[Depends(require_admin)])
+@router.put("/{category_id}", response_model=CategoryResponse, dependencies=[Depends(require_admin), Depends(require_open_project)])
 async def update_category(
     category_id: uuid.UUID,
     body: CategoryUpdate,
@@ -51,7 +53,7 @@ async def update_category(
     return CategoryResponse.model_validate(category)
 
 
-@router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin)])
+@router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin), Depends(require_open_project)])
 async def delete_category(
     category_id: uuid.UUID,
     session: AsyncSession = Depends(get_async_session),

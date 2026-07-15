@@ -30,7 +30,12 @@ class ReportRepository:
         to_dt = datetime(to_date.year, to_date.month, to_date.day, 23, 59, 59, tzinfo=timezone.utc)
         return stmt.where(Ticket.purchased_at >= from_dt).where(Ticket.purchased_at <= to_dt)
 
-    async def summary_query(self, from_date: date, to_date: date) -> list[dict]:
+    def _project_filter(self, stmt, project_id: uuid.UUID | None):
+        if project_id is not None:
+            return stmt.where(Ticket.project_id == project_id)
+        return stmt
+
+    async def summary_query(self, from_date: date, to_date: date, project_id: uuid.UUID | None = None) -> list[dict]:
         alloc_count_subq = self._alloc_count_subq()
         stmt = (
             select(
@@ -45,6 +50,7 @@ class ReportRepository:
             .join(alloc_count_subq, alloc_count_subq.c.item_id == Item.id)
         )
         stmt = self._date_filter(stmt, from_date, to_date)
+        stmt = self._project_filter(stmt, project_id)
         result = await self.session.execute(stmt)
         rows = result.all()
 
@@ -56,7 +62,7 @@ class ReportRepository:
 
         return sorted(totals.values(), key=lambda r: r["total"], reverse=True)
 
-    async def itemized_query(self, from_date: date, to_date: date, member_id: uuid.UUID) -> list[dict]:
+    async def itemized_query(self, from_date: date, to_date: date, member_id: uuid.UUID, project_id: uuid.UUID | None = None) -> list[dict]:
         alloc_count_subq = self._alloc_count_subq()
         stmt = (
             select(
@@ -81,6 +87,7 @@ class ReportRepository:
             .order_by(Ticket.purchased_at.desc(), Ticket.id, Item.position)
         )
         stmt = self._date_filter(stmt, from_date, to_date)
+        stmt = self._project_filter(stmt, project_id)
         result = await self.session.execute(stmt)
         rows = result.all()
         return [
@@ -100,7 +107,7 @@ class ReportRepository:
             for row in rows
         ]
 
-    async def category_query(self, from_date: date, to_date: date) -> dict:
+    async def category_query(self, from_date: date, to_date: date, project_id: uuid.UUID | None = None) -> dict:
         alloc_count_subq = self._alloc_count_subq()
 
         cat_stmt = (
@@ -118,6 +125,7 @@ class ReportRepository:
             .where(Item.category_id.isnot(None))
         )
         cat_stmt = self._date_filter(cat_stmt, from_date, to_date)
+        cat_stmt = self._project_filter(cat_stmt, project_id)
         cat_result = await self.session.execute(cat_stmt)
         cat_rows = cat_result.all()
 
@@ -143,6 +151,7 @@ class ReportRepository:
             .where(Item.category_id.is_(None))
         )
         uncat_stmt = self._date_filter(uncat_stmt, from_date, to_date)
+        uncat_stmt = self._project_filter(uncat_stmt, project_id)
         uncat_result = await self.session.execute(uncat_stmt)
         uncat_rows = uncat_result.all()
         uncategorized = sum(Decimal(str(r.dp)) / Decimal(str(r.cnt)) for r in uncat_rows)

@@ -1,0 +1,120 @@
+> import uuid
+> from datetime import datetime
+> from typing import Any
+  
+> from pydantic import BaseModel
+  
+  
+> class OCRItemDraft(BaseModel):
+>     name: str
+>     price: str
+>     translation_en: str | None = None
+>     translation_ru: str | None = None
+>     translation_pt: str | None = None
+>     suggested_category_id: str | None = None
+  
+  
+> class OCRDraft(BaseModel):
+>     store_name: str
+>     purchased_at: str
+>     items: list[OCRItemDraft]
+>     discount_total: str
+>     total_price: str
+>     raw_image_url: str | None = None
+  
+  
+> class ItemCreateRequest(BaseModel):
+>     name: str
+>     price: str
+>     category_id: uuid.UUID | None = None
+>     position: int = 0
+>     member_ids: list[uuid.UUID]
+>     translation_en: str | None = None
+>     translation_ru: str | None = None
+>     translation_pt: str | None = None
+  
+  
+> class TicketCreateRequest(BaseModel):
+>     store_name: str
+>     purchased_at: datetime
+>     paid_by_id: uuid.UUID
+>     total_price: str
+>     discount_total: str = "0.00"
+>     raw_image_url: str | None = None
+>     items: list[ItemCreateRequest]
+  
+  
+> class TicketUpdateRequest(BaseModel):
+>     store_name: str | None = None
+>     purchased_at: datetime | None = None
+>     paid_by_id: uuid.UUID | None = None
+>     total_price: str | None = None
+>     discount_total: str | None = None
+>     raw_image_url: str | None = None
+  
+  
+> class MemberRefResponse(BaseModel):
+>     id: uuid.UUID
+>     name: str
+  
+>     model_config = {"from_attributes": True}
+  
+  
+> class CategoryRefResponse(BaseModel):
+>     id: uuid.UUID
+>     name: str
+>     color: str
+  
+>     model_config = {"from_attributes": True}
+  
+  
+> class AllocatedMemberResponse(BaseModel):
+>     id: uuid.UUID
+>     name: str
+>     cost: str
+  
+  
+> class ItemResponse(BaseModel):
+>     id: uuid.UUID
+>     name: str
+>     price: str
+>     discounted_price: str
+>     position: int
+>     category: CategoryRefResponse | None
+>     allocated_members: list[AllocatedMemberResponse]
+  
+>     model_config = {"from_attributes": True}
+  
+  
+> class TicketResponse(BaseModel):
+>     id: uuid.UUID
+>     store_name: str
+>     purchased_at: datetime
+>     paid_by: MemberRefResponse
+>     raw_image_url: str | None
+>     total_price: str
+>     discount_total: str
+>     created_at: datetime
+>     items: list[ItemResponse]
+  
+>     model_config = {"from_attributes": True}
+  
+  
+> class TicketListItem(BaseModel):
+>     id: uuid.UUID
+>     store_name: str
+>     purchased_at: datetime
+>     paid_by: MemberRefResponse
+>     total_price: str
+>     discount_total: str
+>     created_at: datetime
+>     item_count: int
+  
+>     model_config = {"from_attributes": True}
+  
+  
+> class TicketListResponse(BaseModel):
+>     items: list[dict[str, Any]]
+>     total: int
+>     page: int
+>     page_size: int

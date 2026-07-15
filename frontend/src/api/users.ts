@@ -6,6 +6,7 @@ export interface AppUser {
   username: string
   role: 'admin' | 'user'
   is_active: boolean
+  project_id: string | null
   created_at: string
   last_login_at: string | null
 }
@@ -19,6 +20,7 @@ export interface UserCreateRequest {
   username: string
   password: string
   role: 'admin' | 'user'
+  project_id?: string | null
 }
 
 export interface UserUpdateRequest {
@@ -26,6 +28,7 @@ export interface UserUpdateRequest {
   password?: string
   role?: 'admin' | 'user'
   is_active?: boolean
+  project_id?: string | null
 }
 
 export function useUsers() {

@@ -7,6 +7,7 @@ import { http, HttpResponse } from 'msw'
 import { server } from '../mocks/server'
 import i18n from '../../src/i18n'
 import BalancesPage from '../../src/pages/BalancesPage'
+import { ProjectProvider } from '../../src/context/ProjectContext'
 
 const BASE_URL = 'http://localhost:8000'
 
@@ -15,9 +16,11 @@ function renderBalances() {
   return render(
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
-        <MemoryRouter>
-          <BalancesPage />
-        </MemoryRouter>
+        <ProjectProvider>
+          <MemoryRouter>
+            <BalancesPage />
+          </MemoryRouter>
+        </ProjectProvider>
       </I18nextProvider>
     </QueryClientProvider>,
   )

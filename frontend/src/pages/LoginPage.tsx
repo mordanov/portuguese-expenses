@@ -1,16 +1,21 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
 import { login } from '../api/auth'
+import { getPublicProjects, ProjectPublic } from '../api/projects'
+import { useProject } from '../context/ProjectContext'
+import ProjectChooser from '../components/projects/ProjectChooser'
 import { isAxiosError } from 'axios'
 
 const LOCALES = [
   { code: 'pt', flag: '🇵🇹', label: 'PT' },
   { code: 'en', flag: '🇬🇧', label: 'EN' },
   { code: 'ru', flag: '🇷🇺', label: 'RU' },
+  { code: 'fr', flag: '🇫🇷', label: 'FR' },
 ]
 
 const loginSchema = z.object({
@@ -23,12 +28,44 @@ type LoginFormData = z.infer<typeof loginSchema>
 export default function LoginPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const { setActiveProject } = useProject()
+  const [serverError, setServerError] = useState<string | null>(null)
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('')
+
+  const { data: publicProjects = [] } = useQuery<ProjectPublic[]>({
+    queryKey: ['projects-public'],
+    queryFn: getPublicProjects,
+  })
+
+  useEffect(() => {
+    if (publicProjects.length > 0 && !selectedProjectId) {
+      const first = publicProjects.find((p) => p.status === 'open') ?? publicProjects[0]
+      setSelectedProjectId(first.id)
+    }
+  }, [publicProjects, selectedProjectId])
+
+  // Apply project colors to login screen when selection changes
+  useEffect(() => {
+    const project = publicProjects.find((p) => p.id === selectedProjectId)
+    const root = document.documentElement
+    if (project) {
+      root.style.setProperty('--project-bg', project.bg_color)
+      root.style.setProperty('--project-text', project.text_color)
+      root.style.setProperty('--project-accent', project.accent_color)
+    } else {
+      root.style.removeProperty('--project-bg')
+      root.style.removeProperty('--project-text')
+      root.style.removeProperty('--project-accent')
+    }
+  }, [selectedProjectId, publicProjects])
+
+  const selectedProject = publicProjects.find((p) => p.id === selectedProjectId) ?? null
+  const showProjectChooser = publicProjects.length > 0
 
   function handleLocaleChange(code: string) {
     i18n.changeLanguage(code)
     localStorage.setItem('i18nextLng', code)
   }
-  const [serverError, setServerError] = useState<string | null>(null)
 
   const {
     register,
@@ -41,7 +78,21 @@ export default function LoginPage() {
   async function onSubmit(data: LoginFormData) {
     setServerError(null)
     try {
-      await login(data.username, data.password)
+      const resp = await login(data.username, data.password, selectedProjectId || undefined)
+      if (resp.project_id) {
+        const matched = publicProjects.find((p) => p.id === resp.project_id)
+        if (matched) {
+          setActiveProject({
+            id: matched.id,
+            name: matched.name,
+            emoji: matched.emoji,
+            bg_color: matched.bg_color,
+            text_color: matched.text_color,
+            accent_color: matched.accent_color,
+            status: matched.status,
+          })
+        }
+      }
       navigate('/', { replace: true })
     } catch (err) {
       if (isAxiosError(err) && err.response?.status === 401) {
@@ -53,15 +104,33 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-pt-green flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[var(--project-bg,#006600)] flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="text-5xl mb-3">🇵🇹</div>
+          <div className="text-5xl mb-3">{selectedProject?.emoji ?? '🌍'}</div>
           <h1 className="text-2xl font-bold text-pt-green">{t('auth.loginSubtitle')}</h1>
           <p className="text-gray-500 text-sm mt-1">{t('auth.loginTitle')}</p>
+          {selectedProject?.description && (
+            <p className="text-gray-400 text-sm mt-2 italic">{selectedProject.description}</p>
+          )}
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+          {/* Project chooser */}
+          {showProjectChooser && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t('projects.switchProject')}
+              </label>
+              <ProjectChooser
+                projects={publicProjects}
+                value={selectedProjectId}
+                onChange={setSelectedProjectId}
+                className="w-full"
+              />
+            </div>
+          )}
+
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
               {t('auth.username')}
@@ -109,23 +178,16 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 flex justify-center gap-1">
-          {LOCALES.map(({ code, flag, label }, idx) => (
-            <span key={code} className="flex items-center">
-              {idx > 0 && <span className="text-gray-300 mx-1">|</span>}
-              <button
-                type="button"
-                onClick={() => handleLocaleChange(code)}
-                className={`px-2 py-1 rounded text-sm transition-colors ${
-                  i18n.language.startsWith(code)
-                    ? 'bg-pt-green text-white font-semibold'
-                    : 'text-gray-500 hover:text-pt-green'
-                }`}
-              >
-                {flag} {label}
-              </button>
-            </span>
-          ))}
+        <div className="mt-6 flex justify-center">
+          <select
+            value={LOCALES.find((l) => i18n.language.startsWith(l.code))?.code ?? 'en'}
+            onChange={(e) => handleLocaleChange(e.target.value)}
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-pt-green"
+          >
+            {LOCALES.map(({ code, flag, label }) => (
+              <option key={code} value={code}>{flag} {label}</option>
+            ))}
+          </select>
         </div>
       </div>
     </div>

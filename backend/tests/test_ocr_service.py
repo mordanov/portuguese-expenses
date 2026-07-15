@@ -1,6 +1,6 @@
 """OCR tests — OpenAI client is ALWAYS mocked (constitution § II)."""
 import io
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi import UploadFile
@@ -18,7 +18,7 @@ def _make_mock_client(json_str: str) -> MagicMock:
     choice = MagicMock()
     choice.message.content = json_str
     response.choices = [choice]
-    client.chat.completions.create.return_value = response
+    client.chat.completions.create = AsyncMock(return_value=response)
     return client
 
 

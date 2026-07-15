@@ -7,6 +7,11 @@ from app.models.family_member import FamilyMember
 from app.repositories.base import BaseRepository
 
 
+def _import_project_member():
+    from app.models.project import ProjectMember
+    return ProjectMember
+
+
 class MemberRepository(BaseRepository[FamilyMember]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(FamilyMember, session)
@@ -46,6 +51,30 @@ class MemberRepository(BaseRepository[FamilyMember]):
     async def get_name_by_id(self, id: uuid.UUID) -> str | None:
         result = await self.session.execute(select(FamilyMember.name).where(FamilyMember.id == id))
         return result.scalar_one_or_none()
+
+    async def list_for_project(
+        self,
+        project_id: uuid.UUID,
+        active_only: bool = False,
+        can_pay_only: bool = False,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[FamilyMember], int]:
+        ProjectMember = _import_project_member()
+        stmt = (
+            select(FamilyMember)
+            .join(ProjectMember, ProjectMember.member_id == FamilyMember.id)
+            .where(ProjectMember.project_id == project_id)
+        )
+        if active_only or can_pay_only:
+            stmt = stmt.where(FamilyMember.is_active == True)  # noqa: E712
+        if can_pay_only:
+            stmt = stmt.where(FamilyMember.can_pay == True)  # noqa: E712
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total = (await self.session.execute(count_stmt)).scalar_one()
+        stmt = stmt.offset((page - 1) * page_size).limit(page_size)
+        rows = (await self.session.execute(stmt)).scalars().all()
+        return list(rows), total
 
     async def soft_delete(self, member: FamilyMember) -> FamilyMember:
         member.is_active = False

@@ -50,6 +50,17 @@ services:
       backend:
         condition: service_healthy
 
+  pgview:
+    image: sosedoff/pgweb
+    restart: unless-stopped
+    ports:
+      - "5433:8081"
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   uploads:

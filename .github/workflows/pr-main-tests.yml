@@ -29,11 +29,11 @@ jobs:
       - name: Install backend dependencies
         run: pip install -r requirements.txt -r requirements-dev.txt
 
-      - name: Run backend tests
+      - name: Run backend tests with coverage
         env:
           LOG_LEVEL: WARNING
           UPLOAD_DIR: /tmp/test_uploads
-        run: pytest -q --tb=short
+        run: pytest -q --tb=short --cov=app --cov-fail-under=80
 
   frontend-tests:
     name: Frontend Tests
@@ -54,16 +54,53 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
+      - name: Type check
+        run: npx tsc --noEmit
+
       - name: Run frontend tests
         run: npm test
 
-  status-check:
+  docker-build:
+    name: Docker Compose Build
     runs-on: ubuntu-latest
-    needs: [backend-tests, frontend-tests]
-    name: All Tests Status
 
     steps:
-      - name: All tests passed
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create minimal .env for build validation
         run: |
-          echo "✅ All tests passed successfully!"
+          cat > .env << 'EOF'
+          POSTGRES_USER=postgres
+          POSTGRES_PASSWORD=changeme
+          POSTGRES_DB=portuguese_expenses
+          DATABASE_URL=postgresql+asyncpg://postgres:changeme@db:5432/portuguese_expenses
+          JWT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7o4qne60TB3bs\nplease-generate-real-key\n-----END PRIVATE KEY-----"
+          JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu6OKp3utEwd27KZaplease\n-----END PUBLIC KEY-----"
+          JWT_ALGORITHM=RS256
+          JWT_EXPIRE_MINUTES=480
+          APP_USER_1_USERNAME=admin
+          APP_USER_1_PASSWORD=changeme
+          APP_USER_2_USERNAME=editor
+          APP_USER_2_PASSWORD=changeme
+          OPENAI_API_KEY=sk-placeholder
+          UPLOAD_DIR=/app/uploads
+          MAX_UPLOAD_SIZE_MB=20
+          MAX_TOTAL_UPLOAD_SIZE_MB=200
+          FRONTEND_URL=http://localhost:3000
+          VITE_API_BASE_URL=http://localhost:8000
+          EOF
+
+      - name: Build Docker images
+        run: docker compose build --no-cache
+
+  status-check:
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests, docker-build]
+    name: All Checks Status
+
+    steps:
+      - name: All checks passed
+        run: |
+          echo "✅ All checks passed successfully!"
           echo "🚀 Pull request is ready for review"

@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --project-bg: #006600;
+  --project-text: #ffffff;
+  --project-accent: #ffd700;
+}
+
 body {
   @apply bg-pt-cream text-gray-900 font-sans;
 }

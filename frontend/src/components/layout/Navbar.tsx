@@ -1,12 +1,16 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, NavLink, useLocation } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { logout, isAdmin } from '../../api/auth'
+import { getPublicProjects } from '../../api/projects'
+import { useProject } from '../../context/ProjectContext'
 
 const LOCALES = [
   { code: 'en', label: 'EN', flag: '🇬🇧' },
   { code: 'ru', label: 'RU', flag: '🇷🇺' },
   { code: 'pt', label: 'PT', flag: '🇵🇹' },
+  { code: 'fr', label: 'FR', flag: '🇫🇷' },
 ]
 
 const MAIN_NAV = [
@@ -24,9 +28,10 @@ const SETTINGS_NAV = [
 const SETTINGS_NAV_ADMIN = [
   ...SETTINGS_NAV,
   { to: '/users' as const, labelKey: 'nav.users' },
+  { to: '/projects' as const, labelKey: 'nav.projects' },
 ]
 
-const SETTINGS_PATHS = ['/members', '/categories', '/users']
+const SETTINGS_PATHS = ['/members', '/categories', '/users', '/projects']
 
 export default function Navbar() {
   const { t, i18n } = useTranslation()
@@ -36,12 +41,17 @@ export default function Navbar() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false)
   const settingsRef = useRef<HTMLDivElement>(null)
-
+  const { activeProject, switchProject } = useProject()
   const admin = isAdmin()
   const settingsLinks = admin ? SETTINGS_NAV_ADMIN : SETTINGS_NAV
   const settingsActive = SETTINGS_PATHS.some((p) => location.pathname.startsWith(p))
 
-  // Close dropdown on outside click
+  const { data: publicProjects = [] } = useQuery({
+    queryKey: ['projects-public'],
+    queryFn: getPublicProjects,
+    enabled: admin,
+  })
+
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
@@ -62,11 +72,20 @@ export default function Navbar() {
     navigate('/login', { replace: true })
   }
 
+  async function handleProjectSwitch(projectId: string) {
+    await switchProject(projectId)
+    // switchProject() handles the reload after updating localStorage + activeProject
+  }
+
   const currentLocale = LOCALES.find((l) => i18n.language.startsWith(l.code)) ?? LOCALES[0]
+
+  const activeNavBg = 'bg-[var(--project-accent,#FFD700)] text-[var(--project-bg,#006600)]'
+  const navbarBg = 'bg-[var(--project-bg,#006600)]'
+  const navbarText = 'text-[var(--project-text,#FFFFFF)]'
 
   return (
     <>
-      <nav className="bg-pt-green text-white shadow-md relative z-40">
+      <nav className={`${navbarBg} ${navbarText} shadow-md relative z-40`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
 
@@ -81,8 +100,8 @@ export default function Navbar() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              <NavLink to="/" className="text-pt-gold font-bold text-lg tracking-tight whitespace-nowrap">
-                🇵🇹 <span className="hidden sm:inline">{t('nav.title')}</span>
+              <NavLink to="/" className={`font-bold text-lg tracking-tight whitespace-nowrap text-[var(--project-accent,#FFD700)]`}>
+                {activeProject?.emoji ?? '🌍'} <span className="hidden sm:inline">{activeProject?.name ?? t('nav.title')}</span>
               </NavLink>
 
               {/* Desktop nav links */}
@@ -94,7 +113,7 @@ export default function Navbar() {
                     end={to === '/'}
                     className={({ isActive }) =>
                       `text-sm font-medium px-3 py-1 rounded transition-colors ${
-                        isActive ? 'bg-pt-gold text-pt-green' : 'text-white hover:bg-white/20'
+                        isActive ? activeNavBg : `${navbarText} hover:bg-white/20`
                       }`
                     }
                   >
@@ -107,7 +126,7 @@ export default function Navbar() {
                   <button
                     onClick={() => setSettingsOpen((v) => !v)}
                     className={`text-sm font-medium px-3 py-1 rounded transition-colors flex items-center gap-1 ${
-                      settingsActive ? 'bg-pt-gold text-pt-green' : 'text-white hover:bg-white/20'
+                      settingsActive ? activeNavBg : `${navbarText} hover:bg-white/20`
                     }`}
                   >
                     {t('nav.settings')}
@@ -137,8 +156,30 @@ export default function Navbar() {
               </div>
             </div>
 
-            {/* Right: language selector + logout */}
+            {/* Right: project switcher (admin) + language selector + logout */}
             <div className="flex items-center gap-2">
+              {/* Admin project switcher */}
+              {admin && publicProjects.length > 1 && (
+                <select
+                  value={activeProject?.id ?? ''}
+                  onChange={(e) => handleProjectSwitch(e.target.value)}
+                  className="hidden md:block bg-white/10 border border-white/30 text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-white text-[var(--project-text,#FFFFFF)]"
+                  aria-label={t('projects.switchProject')}
+                >
+                  {publicProjects.map((p) => (
+                    <option key={p.id} value={p.id} className="text-black bg-white">
+                      {p.status === 'closed' ? `🔒 ${p.name}` : p.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {admin && activeProject && (
+                <span className="hidden md:inline-flex items-center gap-1 text-xs border border-white/30 px-2 py-1 rounded-full">
+                  {activeProject.status === 'closed' && '🔒'}
+                  {publicProjects.length <= 1 && activeProject.name}
+                </span>
+              )}
+
               {/* Mobile: compact select */}
               <select
                 value={currentLocale.code}
@@ -153,27 +194,23 @@ export default function Navbar() {
                 ))}
               </select>
 
-              {/* Desktop: buttons */}
-              <div className="hidden md:flex items-center gap-1">
-                {LOCALES.map(({ code, label, flag }) => (
-                  <button
-                    key={code}
-                    onClick={() => handleLocaleChange(code)}
-                    className={`text-sm px-2 py-1 rounded transition-colors ${
-                      i18n.language.startsWith(code)
-                        ? 'bg-pt-gold text-pt-green font-bold'
-                        : 'text-white hover:bg-white/20'
-                    }`}
-                    aria-label={`Switch to ${label}`}
-                  >
+              {/* Desktop: language combobox */}
+              <select
+                value={currentLocale.code}
+                onChange={(e) => handleLocaleChange(e.target.value)}
+                className="hidden md:block bg-white/10 border border-white/30 text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-white text-[var(--project-text,#FFFFFF)]"
+                aria-label="Language"
+              >
+                {LOCALES.map(({ code, flag, label }) => (
+                  <option key={code} value={code} className="text-black bg-white">
                     {flag} {label}
-                  </button>
+                  </option>
                 ))}
-              </div>
+              </select>
 
               <button
                 onClick={handleLogout}
-                className="text-sm text-white hover:bg-white/20 px-3 py-1 rounded transition-colors"
+                className={`text-sm ${navbarText} hover:bg-white/20 px-3 py-1 rounded transition-colors`}
               >
                 {t('nav.logout')}
               </button>
@@ -187,10 +224,12 @@ export default function Navbar() {
         <div className="fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/40" onClick={() => setMenuOpen(false)} />
 
-          <div className="relative w-72 max-w-[85vw] bg-pt-green text-white h-full flex flex-col shadow-xl">
+          <div className={`relative w-72 max-w-[85vw] ${navbarBg} ${navbarText} h-full flex flex-col shadow-xl`}>
             {/* Drawer header */}
             <div className="flex items-center justify-between px-4 h-16 border-b border-white/20">
-              <span className="text-pt-gold font-bold text-lg">🇵🇹 {t('nav.title')}</span>
+              <span className={`font-bold text-lg text-[var(--project-accent,#FFD700)]`}>
+                {activeProject?.emoji ?? '🌍'} {activeProject?.name ?? t('nav.title')}
+              </span>
               <button
                 onClick={() => setMenuOpen(false)}
                 className="p-2 rounded hover:bg-white/20 transition-colors"
@@ -202,6 +241,23 @@ export default function Navbar() {
               </button>
             </div>
 
+            {/* Mobile project switcher */}
+            {admin && publicProjects.length > 1 && (
+              <div className="px-4 pt-3">
+                <select
+                  value={activeProject?.id ?? ''}
+                  onChange={(e) => handleProjectSwitch(e.target.value)}
+                  className="w-full bg-white/10 border border-white/30 text-white text-sm rounded-lg px-3 py-2 focus:outline-none"
+                >
+                  {publicProjects.map((p) => (
+                    <option key={p.id} value={p.id} className="text-black bg-white">
+                      {p.status === 'closed' ? `🔒 ${p.name}` : p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Nav links */}
             <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
               {MAIN_NAV.map(({ to, labelKey }) => (
@@ -212,7 +268,7 @@ export default function Navbar() {
                   onClick={() => setMenuOpen(false)}
                   className={({ isActive }) =>
                     `block text-sm font-medium px-4 py-3 rounded-lg transition-colors ${
-                      isActive ? 'bg-pt-gold text-pt-green' : 'text-white hover:bg-white/20'
+                      isActive ? activeNavBg : `${navbarText} hover:bg-white/20`
                     }`
                   }
                 >
@@ -224,7 +280,7 @@ export default function Navbar() {
               <button
                 onClick={() => setMobileSettingsOpen((v) => !v)}
                 className={`w-full flex items-center justify-between text-sm font-medium px-4 py-3 rounded-lg transition-colors ${
-                  settingsActive ? 'bg-pt-gold text-pt-green' : 'text-white hover:bg-white/20'
+                  settingsActive ? activeNavBg : `${navbarText} hover:bg-white/20`
                 }`}
               >
                 {t('nav.settings')}
@@ -244,7 +300,7 @@ export default function Navbar() {
                       onClick={() => setMenuOpen(false)}
                       className={({ isActive }) =>
                         `block text-sm font-medium px-4 py-2.5 rounded-lg transition-colors ${
-                          isActive ? 'bg-pt-gold text-pt-green' : 'text-white/80 hover:bg-white/20'
+                          isActive ? activeNavBg : 'text-white/80 hover:bg-white/20'
                         }`
                       }
                     >
@@ -257,24 +313,21 @@ export default function Navbar() {
 
             {/* Drawer footer: language + logout */}
             <div className="border-t border-white/20 px-4 py-4 space-y-3">
-              <div className="flex gap-1">
+              <select
+                value={currentLocale.code}
+                onChange={(e) => handleLocaleChange(e.target.value)}
+                className="w-full bg-white/10 border border-white/30 text-white text-sm rounded-lg px-3 py-2 focus:outline-none"
+                aria-label="Language"
+              >
                 {LOCALES.map(({ code, flag, label }) => (
-                  <button
-                    key={code}
-                    onClick={() => handleLocaleChange(code)}
-                    className={`flex-1 text-sm py-2 rounded-lg transition-colors ${
-                      i18n.language.startsWith(code)
-                        ? 'bg-pt-gold text-pt-green font-bold'
-                        : 'text-white hover:bg-white/20 border border-white/30'
-                    }`}
-                  >
+                  <option key={code} value={code} className="text-black bg-white">
                     {flag} {label}
-                  </button>
+                  </option>
                 ))}
-              </div>
+              </select>
               <button
                 onClick={() => { setMenuOpen(false); handleLogout() }}
-                className="w-full text-sm text-white hover:bg-white/20 px-4 py-2 rounded-lg transition-colors border border-white/30"
+                className={`w-full text-sm ${navbarText} hover:bg-white/20 px-4 py-2 rounded-lg transition-colors border border-white/30`}
               >
                 {t('nav.logout')}
               </button>

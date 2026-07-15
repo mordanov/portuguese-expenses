@@ -5,7 +5,7 @@ from decimal import Decimal
 import pytest
 
 
-async def _seed_data(db_session):
+async def _seed_data(db_session, project_id=None):
     from app.models.allocation import Allocation
     from app.models.category import Category
     from app.models.family_member import FamilyMember
@@ -14,7 +14,7 @@ async def _seed_data(db_session):
 
     alice = FamilyMember(name="SvcAlice")
     bob = FamilyMember(name="SvcBob")
-    wine_cat = Category(name="SvcWine", color="#722F37")
+    wine_cat = Category(name="SvcWine", color="#722F37", project_id=project_id)
     db_session.add(alice)
     db_session.add(bob)
     db_session.add(wine_cat)
@@ -26,6 +26,7 @@ async def _seed_data(db_session):
         paid_by_id=alice.id,
         total_price=Decimal("20.00"),
         discount_total=Decimal("0.00"),
+        project_id=project_id,
     )
     db_session.add(ticket)
     await db_session.flush()
@@ -61,8 +62,8 @@ async def _seed_data(db_session):
 
 
 @pytest.mark.asyncio
-async def test_report_service_summary_direct(db_session):
-    alice, bob, _, _ = await _seed_data(db_session)
+async def test_report_service_summary_direct(db_session, portugal_project):
+    alice, bob, _, _ = await _seed_data(db_session, project_id=portugal_project.id)
     from app.services.report_service import ReportService
 
     service = ReportService(db_session)
@@ -73,8 +74,8 @@ async def test_report_service_summary_direct(db_session):
 
 
 @pytest.mark.asyncio
-async def test_report_service_itemized_direct(db_session):
-    alice, _, _, ticket = await _seed_data(db_session)
+async def test_report_service_itemized_direct(db_session, portugal_project):
+    alice, _, _, ticket = await _seed_data(db_session, project_id=portugal_project.id)
     from app.services.report_service import ReportService
 
     service = ReportService(db_session)
@@ -85,8 +86,8 @@ async def test_report_service_itemized_direct(db_session):
 
 
 @pytest.mark.asyncio
-async def test_report_service_category_direct(db_session):
-    alice, bob, wine_cat, _ = await _seed_data(db_session)
+async def test_report_service_category_direct(db_session, portugal_project):
+    alice, bob, wine_cat, _ = await _seed_data(db_session, project_id=portugal_project.id)
     from app.services.report_service import ReportService
 
     service = ReportService(db_session)

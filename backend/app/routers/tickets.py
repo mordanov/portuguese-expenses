@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
-from app.dependencies import get_current_user, require_admin
+from app.dependencies import get_current_project_id, get_current_user, require_admin, require_open_project
 from app.schemas.ticket import OCRDraft, TicketCreateRequest, TicketListResponse, TicketResponse
 from app.services.ocr_service import OCRParseError, OCRService, OCRServiceError, UploadValidationError
 from app.services.ticket_service import TicketService
@@ -83,25 +83,34 @@ async def translate_names(body: TranslateNamesRequest) -> list[dict]:
     return results
 
 
-@router.post("/upload", response_model=OCRDraft, dependencies=[Depends(require_admin)])
+@router.post("/upload", response_model=OCRDraft, dependencies=[Depends(require_admin), Depends(require_open_project)])
 async def upload_receipt(
     files: list[UploadFile] = File(...),
     session: AsyncSession = Depends(get_async_session),
     ocr_service: OCRService = Depends(get_ocr_service),
+    project_id: uuid.UUID = Depends(get_current_project_id),
 ) -> OCRDraft:
     import os
     import aiofiles
     from sqlalchemy import select as _select
     from app.models.category import Category as _Category
+    from app.models.project import Project as _Project
     from app.config import get_settings as _gs
 
     if not files:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="No files provided")
 
-    result = await session.execute(_select(_Category.id, _Category.name))
+    # Fetch categories scoped to the active project
+    cat_stmt = _select(_Category.id, _Category.name).where(_Category.project_id == project_id)
+    result = await session.execute(cat_stmt)
     categories = [{"id": row.id, "name": row.name} for row in result.all()]
+
+    # Get project's default language for OCR context
+    proj_result = await session.execute(_select(_Project).where(_Project.id == project_id))
+    proj = proj_result.scalar_one_or_none()
+    language = proj.default_language if proj else "pt"
     try:
-        draft = await ocr_service.process_multiple_uploads(files, categories=categories)
+        draft = await ocr_service.process_multiple_uploads(files, categories=categories, language=language)
     except UploadValidationError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
     except OCRParseError as exc:
@@ -124,17 +133,18 @@ async def upload_receipt(
     return draft
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin)])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin), Depends(require_open_project)])
 async def create_ticket(
     body: TicketCreateRequest,
     background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_async_session),
+    project_id: uuid.UUID = Depends(get_current_project_id),
 ) -> dict:
     from app.config import get_settings as _gs
     from app.routers.items import _translate_and_save_item
 
     service = TicketService(session)
-    ticket = await service.save_ticket(body)
+    ticket = await service.save_ticket(body, project_id=project_id)
     await session.commit()
     ticket = await service.repo.get_ticket_with_detail(ticket.id)
     db_url = _gs().database_url
@@ -154,6 +164,7 @@ async def list_tickets(
     category_id: uuid.UUID | None = None,
     session: AsyncSession = Depends(get_async_session),
     _: str = Depends(get_current_user),
+    project_id: uuid.UUID = Depends(get_current_project_id),
 ) -> dict:
     from app.repositories.ticket_repository import TicketRepository
 
@@ -165,6 +176,7 @@ async def list_tickets(
         to_date=to_date,
         member_id=member_id,
         category_id=category_id,
+        project_id=project_id,
     )
     items = [
         {
@@ -192,7 +204,7 @@ async def get_ticket(
     return _ticket_to_response(ticket)
 
 
-@router.put("/{ticket_id}", dependencies=[Depends(require_admin)])
+@router.put("/{ticket_id}", dependencies=[Depends(require_admin), Depends(require_open_project)])
 async def update_ticket(
     ticket_id: uuid.UUID,
     body: dict,
@@ -226,7 +238,7 @@ async def update_ticket(
     return _ticket_to_response(ticket)
 
 
-@router.post("/{ticket_id}/items", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin)])
+@router.post("/{ticket_id}/items", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin), Depends(require_open_project)])
 async def add_item_to_ticket(
     ticket_id: uuid.UUID,
     body: dict,
@@ -288,7 +300,7 @@ async def add_item_to_ticket(
     return _item_to_dict(new_item)
 
 
-@router.delete("/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin)])
+@router.delete("/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin), Depends(require_open_project)])
 async def delete_ticket(
     ticket_id: uuid.UUID,
     session: AsyncSession = Depends(get_async_session),

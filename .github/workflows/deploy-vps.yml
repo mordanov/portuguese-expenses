@@ -33,11 +33,11 @@ jobs:
       - name: Install backend dependencies
         run: pip install -r requirements.txt -r requirements-dev.txt
 
-      - name: Run backend tests
+      - name: Run backend tests with coverage
         env:
           LOG_LEVEL: WARNING
           UPLOAD_DIR: /tmp/test_uploads
-        run: pytest -q --tb=short
+        run: pytest -q --tb=short --cov=app --cov-fail-under=80
 
   test-frontend:
     name: Frontend Tests
@@ -57,6 +57,9 @@ jobs:
 
       - name: Install frontend dependencies
         run: npm install
+
+      - name: Type check
+        run: npx tsc --noEmit
 
       - name: Run frontend tests
         run: npm test

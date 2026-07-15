@@ -1,18 +1,21 @@
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
-from app.dependencies import get_current_user, require_admin
+from app.dependencies import get_current_project_id, require_admin, require_open_project
 from app.repositories.payment_repository import PaymentRepository
 from app.schemas.payment import PaymentCreateRequest, PaymentResponse
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
 
-@router.post("", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin)])
+@router.post("", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin), Depends(require_open_project)])
 async def record_payment(
     body: PaymentCreateRequest,
     session: AsyncSession = Depends(get_async_session),
+    project_id: uuid.UUID | None = Depends(get_current_project_id),
 ) -> PaymentResponse:
     if body.payer_id == body.payee_id:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Payer and payee must differ")
@@ -21,6 +24,7 @@ async def record_payment(
         payer_id=body.payer_id,
         payee_id=body.payee_id,
         amount=body.amount,
+        project_id=project_id,
         note=body.note,
     )
     await session.commit()

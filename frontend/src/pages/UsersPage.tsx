@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useUsers, useCreateUser, useUpdateUser, type AppUser } from '../api/users'
+import { getPublicProjects, type ProjectPublic } from '../api/projects'
 import { isAxiosError } from 'axios'
 
 type ModalMode = { type: 'add' } | { type: 'edit'; user: AppUser }
@@ -10,11 +12,16 @@ export default function UsersPage() {
   const { data, isLoading } = useUsers()
   const { mutateAsync: createUser } = useCreateUser()
   const { mutateAsync: updateUser } = useUpdateUser()
+  const { data: projects = [] } = useQuery<ProjectPublic[]>({
+    queryKey: ['projects-public'],
+    queryFn: getPublicProjects,
+  })
 
   const [modal, setModal] = useState<ModalMode | null>(null)
   const [formUsername, setFormUsername] = useState('')
   const [formPassword, setFormPassword] = useState('')
   const [formRole, setFormRole] = useState<'admin' | 'user'>('user')
+  const [formProjectId, setFormProjectId] = useState<string>('')
   const [formError, setFormError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -25,6 +32,7 @@ export default function UsersPage() {
     setFormUsername('')
     setFormPassword('')
     setFormRole('user')
+    setFormProjectId('')
     setFormError(null)
     setModal({ type: 'add' })
   }
@@ -33,6 +41,7 @@ export default function UsersPage() {
     setFormUsername(user.username)
     setFormPassword('')
     setFormRole(user.role)
+    setFormProjectId(user.project_id ?? '')
     setFormError(null)
     setModal({ type: 'edit', user })
   }
@@ -55,13 +64,19 @@ export default function UsersPage() {
     setFormError(null)
     try {
       if (modal?.type === 'add') {
-        await createUser({ username: formUsername.trim(), password: formPassword, role: formRole })
+        await createUser({
+          username: formUsername.trim(),
+          password: formPassword,
+          role: formRole,
+          project_id: formProjectId || null,
+        })
       } else if (modal?.type === 'edit') {
         await updateUser({
           id: modal.user.id,
           username: formUsername.trim(),
           password: formPassword || undefined,
           role: formRole,
+          project_id: formProjectId || null,
         })
       }
       closeModal()
@@ -125,6 +140,10 @@ export default function UsersPage() {
                   {user.role === 'admin' ? t('users.roleAdmin') : t('users.roleUser')}
                   {' · '}
                   {user.is_active ? t('users.active') : t('users.blocked')}
+                  {user.project_id && (() => {
+                    const proj = projects.find((p) => p.id === user.project_id)
+                    return proj ? <span> · {proj.name}</span> : null
+                  })()}
                 </p>
                 <p className="text-xs text-gray-300 mt-0.5">
                   {t('users.lastLogin')}: {user.last_login_at
@@ -202,6 +221,21 @@ export default function UsersPage() {
                 >
                   <option value="admin">{t('users.roleAdmin')}</option>
                   <option value="user">{t('users.roleUser')}</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">
+                  {t('projects.title')}{formRole === 'user' ? ' *' : ''}
+                </label>
+                <select
+                  value={formProjectId}
+                  onChange={(e) => setFormProjectId(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
+                >
+                  <option value="">— {t('projects.none', 'None')} —</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
                 </select>
               </div>
             </div>

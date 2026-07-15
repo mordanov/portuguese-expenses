@@ -8,6 +8,7 @@ import BalanceRow_ from '../components/balances/BalanceRow'
 import DateRangePicker from '../components/shared/DateRangePicker'
 import { isAdmin } from '../api/auth'
 import { applyOffsets } from '../utils/applyOffsets'
+import { useProject } from '../context/ProjectContext'
 
 type RuleType = 'absorb' | 'transfer'
 
@@ -30,6 +31,8 @@ type UiRule = DraftRule | SavedRule
 export default function BalancesPage() {
   const { t } = useTranslation()
   const admin = isAdmin()
+  const { activeProject } = useProject()
+  const projectOpen = activeProject?.status === 'open'
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [debtorId, setDebtorId] = useState('')
@@ -191,7 +194,7 @@ export default function BalancesPage() {
             <p className="text-sm font-medium text-gray-700">{t('balances.offsetting.title')}</p>
             <p className="text-xs text-gray-400">{t('balances.offsetting.description')}</p>
           </div>
-          {admin && (
+          {admin && projectOpen && (
             <div className="flex gap-2">
               <button
                 onClick={() => addDraft('absorb')}
@@ -238,7 +241,7 @@ export default function BalancesPage() {
                   </span>
                 </>
               )}
-              {admin && (
+              {admin && projectOpen && (
                 <button
                   onClick={() => removeSaved(rule.id)}
                   className="text-gray-400 hover:text-red-500 text-sm shrink-0"
@@ -325,7 +328,7 @@ export default function BalancesPage() {
 
       <div className="space-y-3">
         {filtered.map((balance, idx) => (
-          <BalanceRow_ key={idx} balance={balance} onRecordPayment={admin ? openPaymentModal : undefined} />
+          <BalanceRow_ key={idx} balance={balance} onRecordPayment={admin && projectOpen ? openPaymentModal : undefined} />
         ))}
       </div>
 

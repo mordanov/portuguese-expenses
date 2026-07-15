@@ -93,7 +93,7 @@ class OCRService:
             return self._client
         try:
             import openai
-            return openai.OpenAI(api_key=settings.openai_api_key)
+            return openai.AsyncOpenAI(api_key=settings.openai_api_key)
         except ImportError as exc:
             raise OCRServiceError("OpenAI SDK not available") from exc
 
@@ -122,7 +122,7 @@ class OCRService:
         images[0].save(buf, format="JPEG")
         return buf.getvalue()
 
-    async def process_upload(self, file: UploadFile, categories: list[dict] | None = None) -> OCRDraft:
+    async def process_upload(self, file: UploadFile, categories: list[dict] | None = None, language: str = "pt") -> OCRDraft:
         content = await file.read()
         self._validate_upload(content)
 
@@ -143,10 +143,11 @@ class OCRService:
             [{"id": str(c["id"]), "name": c["name"]} for c in cats],
             ensure_ascii=False,
         )
-        system_prompt = _SYSTEM_PROMPT_TEMPLATE.format(categories_json=categories_json)
+        language_hint = f"The receipt is written in {language}.\n"
+        system_prompt = language_hint + _SYSTEM_PROMPT_TEMPLATE.format(categories_json=categories_json)
 
         try:
-            response = client.chat.completions.create(
+            response = await client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -223,6 +224,7 @@ class OCRService:
         self,
         files: list[UploadFile],
         categories: list[dict] | None = None,
+        language: str = "pt",
     ) -> OCRDraft:
         """Process one or more receipt images and merge into a single OCRDraft.
 
@@ -235,7 +237,7 @@ class OCRService:
 
         drafts: list[OCRDraft] = []
         for f in files:
-            draft = await self.process_upload(f, categories=categories)
+            draft = await self.process_upload(f, categories=categories, language=language)
             drafts.append(draft)
 
         if len(drafts) == 1:

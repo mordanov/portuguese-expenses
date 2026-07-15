@@ -30,7 +30,7 @@ class TicketService:
         self.repo = TicketRepository(session)
         self.member_repo = MemberRepository(session)
 
-    async def save_ticket(self, request: TicketCreateRequest) -> Ticket:
+    async def save_ticket(self, request: TicketCreateRequest, project_id: uuid.UUID | None = None) -> Ticket:
         payer = await self.member_repo.get_by_id(request.paid_by_id)
         if not payer or not payer.is_active:
             raise HTTPException(status_code=422, detail="paid_by_id references an unknown or inactive member")
@@ -85,6 +85,7 @@ class TicketService:
             discount_total=discount_total,
             raw_image_url=request.raw_image_url,
             items_data=items_data,
+            project_id=project_id,
         )
 
     async def get_ticket(self, ticket_id: uuid.UUID) -> Ticket:

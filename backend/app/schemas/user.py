@@ -9,6 +9,7 @@ class UserResponse(BaseModel):
     username: str
     role: str
     is_active: bool
+    project_id: uuid.UUID | None = None
     created_at: datetime
     last_login_at: datetime | None = None
 
@@ -24,6 +25,7 @@ class UserCreateRequest(BaseModel):
     username: str
     password: str
     role: str = "user"
+    project_id: uuid.UUID | None = None
 
     @field_validator("role")
     @classmethod
@@ -38,6 +40,7 @@ class UserUpdateRequest(BaseModel):
     password: str | None = None
     role: str | None = None
     is_active: bool | None = None
+    project_id: uuid.UUID | None = None
 
     @field_validator("role")
     @classmethod

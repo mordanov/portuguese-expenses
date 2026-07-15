@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_create_member(client, auth_headers):
+async def test_create_member(client, auth_headers, portugal_project):
     resp = await client.post("/members", json={"name": "Bob"}, headers=auth_headers)
     assert resp.status_code == 201
     data = resp.json()
@@ -79,7 +79,7 @@ async def test_deactivated_member_excluded_from_active_selectors(client, auth_he
 
 
 @pytest.mark.asyncio
-async def test_deactivated_member_present_in_historical_allocation(client, auth_headers, db_session, member):
+async def test_deactivated_member_present_in_historical_allocation(client, auth_headers, db_session, member, portugal_project):
     """T067: Deactivated member's name must still appear on historical ticket allocations after deactivation."""
     from decimal import Decimal
     from app.models.allocation import Allocation
@@ -100,6 +100,7 @@ async def test_deactivated_member_present_in_historical_allocation(client, auth_
         paid_by_id=payer_id,
         total_price=Decimal("10.00"),
         discount_total=Decimal("0.00"),
+        project_id=portugal_project.id,
     )
     db_session.add(ticket)
     await db_session.flush()

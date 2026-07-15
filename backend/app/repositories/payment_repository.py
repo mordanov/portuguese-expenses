@@ -17,9 +17,10 @@ class PaymentRepository:
         payer_id: uuid.UUID,
         payee_id: uuid.UUID,
         amount: Decimal,
+        project_id: uuid.UUID | None = None,
         note: str | None = None,
     ) -> Payment:
-        payment = Payment(payer_id=payer_id, payee_id=payee_id, amount=amount, note=note)
+        payment = Payment(payer_id=payer_id, payee_id=payee_id, amount=amount, project_id=project_id, note=note)
         self.session.add(payment)
         await self.session.flush()
         await self.session.refresh(payment)
@@ -29,6 +30,7 @@ class PaymentRepository:
         self,
         from_date: datetime | None = None,
         to_date: datetime | None = None,
+        project_id: uuid.UUID | None = None,
     ) -> list[dict]:
         """Return sum of payments per (payer_id, payee_id) pair within the date range."""
         from sqlalchemy import func as sqlfunc
@@ -43,6 +45,8 @@ class PaymentRepository:
             stmt = stmt.where(Payment.paid_at >= from_date)
         if to_date:
             stmt = stmt.where(Payment.paid_at <= to_date)
+        if project_id:
+            stmt = stmt.where(Payment.project_id == project_id)
 
         result = await self.session.execute(stmt)
         return [
@@ -54,12 +58,15 @@ class PaymentRepository:
         self,
         from_date: datetime | None = None,
         to_date: datetime | None = None,
+        project_id: uuid.UUID | None = None,
     ) -> list[Payment]:
         stmt = select(Payment).order_by(Payment.paid_at.desc())
         if from_date:
             stmt = stmt.where(Payment.paid_at >= from_date)
         if to_date:
             stmt = stmt.where(Payment.paid_at <= to_date)
+        if project_id:
+            stmt = stmt.where(Payment.project_id == project_id)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 

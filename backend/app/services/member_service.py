@@ -12,8 +12,11 @@ class MemberService:
         self.repo = MemberRepository(session)
 
     async def list_members(
-        self, active_only: bool = False, can_pay_only: bool = False, page: int = 1, page_size: int = 20
+        self, active_only: bool = False, can_pay_only: bool = False, page: int = 1, page_size: int = 20,
+        project_id: uuid.UUID | None = None,
     ) -> tuple[list[FamilyMember], int]:
+        if project_id is not None:
+            return await self.repo.list_for_project(project_id=project_id, active_only=active_only, can_pay_only=can_pay_only, page=page, page_size=page_size)
         if can_pay_only:
             return await self.repo.list_can_pay(page=page, page_size=page_size)
         if active_only:

@@ -13,6 +13,7 @@ class Ticket(Base):
     __tablename__ = "tickets"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False)
     store_name: Mapped[str] = mapped_column(String(200), nullable=False)
     purchased_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     paid_by_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("family_members.id"), nullable=False)

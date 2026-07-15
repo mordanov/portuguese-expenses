@@ -1,6 +1,6 @@
 {
   "nav": {
-    "title": "Portuguese Drunk Sailors",
+    "title": "Slightly drunk travelers",
     "dashboard": "Dashboard",
     "tickets": "Tickets",
     "members": "Members",
@@ -9,7 +9,8 @@
     "balances": "Balances",
     "users": "Users",
     "settings": "Settings",
-    "logout": "Logout"
+    "logout": "Logout",
+    "projects": "Projects"
   },
   "auth": {
     "username": "Username",
@@ -18,7 +19,7 @@
     "invalidCredentials": "Invalid username or password",
     "required": "This field is required",
     "loginTitle": "Sign In",
-    "loginSubtitle": "Portuguese Drunk Sailors"
+    "loginSubtitle": "Slightly drunk travelers"
   },
   "members": {
     "title": "Family Members",
@@ -266,6 +267,28 @@
     "selfBlockError": "You cannot block yourself",
     "lastLogin": "Last login",
     "neverLoggedIn": "Never"
+  },
+  "projects": {
+    "title": "Projects",
+    "new": "New Project",
+    "edit": "Edit Project",
+    "close": "Close",
+    "reopen": "Reopen",
+    "closed": "Closed",
+    "open": "Open",
+    "suggestColors": "Suggest Colors",
+    "language": "Default Language",
+    "members": "Members",
+    "members.add": "Add Member",
+    "members.remove": "Remove",
+    "members.empty": "No members linked.",
+    "colorScheme": "Color Scheme",
+    "switchProject": "Select Project",
+    "empty": "No projects yet.",
+    "description": "Description",
+    "descriptionPlaceholder": "e.g. Portuguese drunk sailors",
+    "emoji": "Emoji",
+    "suggestEmoji": "Suggest flag"
   },
   "common": {
     "loading": "Loading…",

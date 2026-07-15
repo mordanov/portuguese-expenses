@@ -1,6 +1,6 @@
 {
   "nav": {
-    "title": "Португальские пьяные матросы",
+    "title": "Немного пьяные путешественники",
     "dashboard": "Главная",
     "tickets": "Чеки",
     "members": "Участники",
@@ -9,7 +9,8 @@
     "balances": "Баланс",
     "users": "Пользователи",
     "settings": "Настройки",
-    "logout": "Выйти"
+    "logout": "Выйти",
+    "projects": "Проекты"
   },
   "auth": {
     "username": "Имя пользователя",
@@ -18,7 +19,7 @@
     "invalidCredentials": "Неверное имя пользователя или пароль",
     "required": "Обязательное поле",
     "loginTitle": "Вход",
-    "loginSubtitle": "Португальские пьяные матросы"
+    "loginSubtitle": "Немного пьяные путешественники"
   },
   "members": {
     "title": "Члены семьи",
@@ -268,6 +269,28 @@
     "selfBlockError": "Нельзя заблокировать себя",
     "lastLogin": "Последний вход",
     "neverLoggedIn": "Ни разу"
+  },
+  "projects": {
+    "title": "Проекты",
+    "new": "Новый проект",
+    "edit": "Редактировать проект",
+    "close": "Закрыть",
+    "reopen": "Открыть",
+    "closed": "Закрыт",
+    "open": "Открыт",
+    "suggestColors": "Предложить цвета",
+    "language": "Язык по умолчанию",
+    "members": "Участники",
+    "members.add": "Добавить участника",
+    "members.remove": "Удалить",
+    "members.empty": "Участников нет.",
+    "colorScheme": "Цветовая схема",
+    "switchProject": "Выбрать проект",
+    "empty": "Проектов пока нет.",
+    "description": "Описание",
+    "descriptionPlaceholder": "напр. Portugues drunk sailors",
+    "emoji": "Эмодзи",
+    "suggestEmoji": "Предложить флаг"
   },
   "common": {
     "loading": "Загрузка…",
