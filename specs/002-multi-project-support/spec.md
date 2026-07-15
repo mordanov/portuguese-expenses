@@ -160,15 +160,17 @@ nothing; all non-admin users can still access their data.
 
 ### Edge Cases
 
-- What happens when an admin attempts to delete a project that still has tickets?
-  → Deletion is blocked; the admin must reassign or archive the project.
+- What happens when an admin attempts to delete a project?
+  → Hard-delete is never allowed regardless of ticket count. Projects are retired by
+  closing them (read-only state) and can be re-opened at any time.
 - What happens when the LLM colour suggestion service is unavailable?
   → A default neutral palette is applied; the admin can enter colours manually.
 - What happens when a non-admin user's linked project is deleted?
   → The user account is locked out with a clear "no active project" message until an
   admin reassigns them.
-- What happens when the same family member name exists in two projects?
-  → Family members are project-scoped; duplicate names across projects are allowed.
+- What happens when a family member is linked to multiple projects?
+  → The member appears in allocation selectors for all their linked projects. Their
+  historical allocations in each project remain independent.
 - What happens when the admin creates a project with a colour contrast ratio that fails
   accessibility guidelines?
   → A visible warning is shown, but saving is not blocked.
@@ -178,17 +180,20 @@ nothing; all non-admin users can still access their data.
 ### Functional Requirements
 
 - **FR-001**: The system MUST introduce a `Project` entity with attributes: name (unique),
-  default ticket language, background colour, text colour, accent colour, and creation date.
-- **FR-002**: All `Ticket`, `Item`, `Allocation`, `FamilyMember`, and `Category` records
-  MUST be linked to exactly one `Project`.
+  default ticket language, background colour, text colour, accent colour, creation date, and
+  status (`open` | `closed`).
+- **FR-002**: `Ticket`, `Item`, `Allocation`, and `Category` records MUST be linked to
+  exactly one `Project`. `FamilyMember` records are global (not project-scoped) and are
+  associated with projects through a `ProjectMember` join table.
 - **FR-003**: Each `AppUser` MUST carry a role (`admin` or `user`) and, if role is `user`,
   MUST be linked to exactly one `Project`.
 - **FR-004**: Admin users MUST be able to access all projects via a project chooser on the
   login screen and via a navbar switcher once authenticated.
 - **FR-005**: Non-admin users MUST be scoped to their assigned project automatically; they
   MUST NOT be able to view or modify data belonging to other projects.
-- **FR-006**: Admins MUST be able to create, rename, and configure the colour scheme of a
-  project through a project management UI.
+- **FR-006**: Admins MUST be able to create, rename, configure the colour scheme, and
+  close/re-open a project through a dedicated top-level "Projects" settings page visible
+  only to admin users.
 - **FR-007**: The system MUST offer an LLM-powered colour suggestion endpoint: given a
   project name string, it returns a suggested background colour, text colour, and accent
   colour.
@@ -197,15 +202,22 @@ nothing; all non-admin users can still access their data.
 - **FR-009**: The application shell (navbar, header) MUST apply the active project's colour
   scheme; switching projects MUST update the palette without page reload.
 - **FR-010**: The migration MUST create a `Portugal-2026` project with `pt` as the default
-  ticket language and link all existing `Ticket`, `Item`, `Allocation`, `FamilyMember`, and
-  `Category` records to it via an Alembic migration.
+  ticket language and link all existing `Ticket`, `Item`, `Allocation`, and `Category`
+  records to it via an Alembic migration. All existing `FamilyMember` records MUST be added
+  to `Portugal-2026` via the `ProjectMember` join table.
 - **FR-011**: The migration MUST link all existing `AppUser` records with role `user` to the
   `Portugal-2026` project.
 - **FR-012**: All list and reporting queries MUST be filtered by the active project at the
   database level.
-- **FR-013**: Admins MUST be able to assign a family member to a project and link a `user`
-  role app account to a project.
-- **FR-014**: Project deletion MUST be blocked while the project contains any tickets.
+- **FR-013**: Admins MUST be able to add or remove a family member from a project via the
+  Projects settings page; one member can belong to multiple projects simultaneously. Admins
+  MUST also be able to link a `user` role app account to a specific project.
+- **FR-014**: Hard-delete of a project is NOT supported. Admins MUST close a project to
+  retire it; a closed project becomes read-only for all users (no new tickets, no edits).
+  Admins MUST be able to re-open a closed project at any time.
+- **FR-014a**: A closed project remains fully visible and queryable in reports and the
+  balance screen; it is NOT hidden from the project chooser — its closed status is indicated
+  visually.
 - **FR-015**: The project chooser on the login screen MUST display project name and apply the
   project's background colour as a visual cue.
 
@@ -213,10 +225,13 @@ nothing; all non-admin users can still access their data.
 
 - **Project**: Represents one trip or expense-tracking context. Attributes: id (UUID), name
   (unique string), default_language (IETF language tag, e.g. `pt`, `fr`), bg_color (hex),
-  text_color (hex), accent_color (hex), created_at.
+  text_color (hex), accent_color (hex), status (`open` | `closed`), created_at.
 - **AppUser** (updated): Gains `role` (`admin` | `user`) and nullable `project_id` FK
   (required when role = `user`).
-- **FamilyMember** (updated): Gains `project_id` FK — scoped to exactly one project.
+- **FamilyMember** (unchanged structure): Global entity — not project-scoped directly.
+  Linked to projects through the `ProjectMember` join table.
+- **ProjectMember**: Join table linking `FamilyMember` to `Project`. Attributes: member_id,
+  project_id, joined_at. A member can belong to many projects; a project has many members.
 - **Category** (updated): Gains `project_id` FK — scoped to exactly one project.
 - **Ticket** (updated): Gains `project_id` FK.
 - **Item / Allocation**: Inherit project scope transitively through their parent Ticket and
@@ -246,8 +261,8 @@ nothing; all non-admin users can still access their data.
 - The number of projects is small (single digits); no pagination of the project list is
   required for v1.
 - Currency remains euros for all projects; multi-currency is out of scope.
-- A family member belongs to exactly one project; cross-project member sharing is out of
-  scope for v1.
+- A family member is a global entity and can be linked to multiple projects via the
+  `ProjectMember` join table.
 - Categories are project-scoped; default categories are seeded per project on creation.
 - The LLM colour suggestion is a best-effort feature; the UI must remain fully functional
   without it.
@@ -259,3 +274,11 @@ nothing; all non-admin users can still access their data.
   as a language hint; the OCR service interprets it.
 - Project colour values are stored as 6-digit hex strings (e.g., `#3A7D44`); no opacity
   or CSS variable abstractions are required at the data layer.
+
+## Clarifications
+
+### Session 2026-07-15
+
+- Q: When a project is finished, how should it be retired — archive, hard-delete, or stay open? → A: Hard-delete is never allowed. An admin closes the project, making it read-only for everyone (no new tickets, no edits). Closed projects remain visible in the chooser (with a visual indicator) and fully queryable in reports. Admins can re-open a closed project at any time.
+- Q: Where does admin project management (create / configure / close) live in the UI? → A: Dedicated top-level "Projects" settings page, visible to admin users only.
+- Q: Can the same family member belong to multiple projects? → A: Yes. FamilyMember is a global entity; membership is expressed through a ProjectMember join table, so one person can participate in multiple projects simultaneously.
