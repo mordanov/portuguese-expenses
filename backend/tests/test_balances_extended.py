@@ -5,7 +5,7 @@ from decimal import Decimal
 import pytest
 
 
-async def _seed_ticket(db_session, payer, consumer, price):
+async def _seed_ticket(db_session, payer, consumer, price, project_id=None):
     from app.models.allocation import Allocation
     from app.models.item import Item
     from app.models.ticket import Ticket
@@ -16,6 +16,7 @@ async def _seed_ticket(db_session, payer, consumer, price):
         paid_by_id=payer.id,
         total_price=price,
         discount_total=Decimal("0.00"),
+        project_id=project_id,
     )
     db_session.add(ticket)
     await db_session.flush()
@@ -37,7 +38,7 @@ async def _seed_ticket(db_session, payer, consumer, price):
 
 
 @pytest.mark.asyncio
-async def test_balances_single_direction(client, auth_headers, db_session):
+async def test_balances_single_direction(client, auth_headers, db_session, portugal_project):
     from app.models.family_member import FamilyMember
 
     alice = FamilyMember(name="ExtAlice")
@@ -46,7 +47,7 @@ async def test_balances_single_direction(client, auth_headers, db_session):
     db_session.add(bob)
     await db_session.flush()
 
-    await _seed_ticket(db_session, alice, bob, Decimal("50.00"))
+    await _seed_ticket(db_session, alice, bob, Decimal("50.00"), project_id=portugal_project.id)
 
     resp = await client.get("/balances", headers=auth_headers)
     assert resp.status_code == 200
@@ -56,7 +57,7 @@ async def test_balances_single_direction(client, auth_headers, db_session):
 
 
 @pytest.mark.asyncio
-async def test_report_summary_correct_split(client, auth_headers, db_session):
+async def test_report_summary_correct_split(client, auth_headers, db_session, portugal_project):
     from app.models.allocation import Allocation
     from app.models.family_member import FamilyMember
     from app.models.item import Item
@@ -74,6 +75,7 @@ async def test_report_summary_correct_split(client, auth_headers, db_session):
         paid_by_id=alice.id,
         total_price=Decimal("30.00"),
         discount_total=Decimal("0.00"),
+        project_id=portugal_project.id,
     )
     db_session.add(ticket)
     await db_session.flush()
@@ -105,7 +107,7 @@ async def test_report_summary_correct_split(client, auth_headers, db_session):
 
 
 @pytest.mark.asyncio
-async def test_report_itemized(client, auth_headers, db_session, member):
+async def test_report_itemized(client, auth_headers, db_session, member, portugal_project):
     from app.models.allocation import Allocation
     from app.models.item import Item
     from app.models.ticket import Ticket
@@ -116,6 +118,7 @@ async def test_report_itemized(client, auth_headers, db_session, member):
         paid_by_id=member.id,
         total_price=Decimal("20.00"),
         discount_total=Decimal("0.00"),
+        project_id=portugal_project.id,
     )
     db_session.add(ticket)
     await db_session.flush()
@@ -146,7 +149,7 @@ async def test_report_itemized(client, auth_headers, db_session, member):
 
 
 @pytest.mark.asyncio
-async def test_report_categories_uncategorized(client, auth_headers, db_session, member):
+async def test_report_categories_uncategorized(client, auth_headers, db_session, member, portugal_project):
     from app.models.allocation import Allocation
     from app.models.item import Item
     from app.models.ticket import Ticket
@@ -157,6 +160,7 @@ async def test_report_categories_uncategorized(client, auth_headers, db_session,
         paid_by_id=member.id,
         total_price=Decimal("15.00"),
         discount_total=Decimal("0.00"),
+        project_id=portugal_project.id,
     )
     db_session.add(ticket)
     await db_session.flush()

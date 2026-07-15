@@ -1,0 +1,103 @@
+> import uuid
+> from datetime import datetime
+> from decimal import Decimal
+  
+> from sqlalchemy import func, select
+> from sqlalchemy.ext.asyncio import AsyncSession
+> from sqlalchemy.orm import selectinload
+  
+> from app.models.allocation import Allocation
+> from app.models.family_member import FamilyMember
+> from app.models.item import Item
+> from app.models.ticket import Ticket
+> from app.repositories.base import BaseRepository
+  
+  
+> class TicketRepository(BaseRepository[Ticket]):
+>     def __init__(self, session: AsyncSession) -> None:
+!         super().__init__(Ticket, session)
+  
+>     async def create_ticket_with_items_and_allocations(
+>         self,
+>         store_name: str,
+>         purchased_at: datetime,
+>         paid_by_id: uuid.UUID,
+>         total_price: Decimal,
+>         discount_total: Decimal,
+>         raw_image_url: str | None,
+>         items_data: list[dict],
+>         project_id: uuid.UUID | None = None,
+>     ) -> Ticket:
+!         ticket = Ticket(
+!             store_name=store_name,
+!             purchased_at=purchased_at,
+!             paid_by_id=paid_by_id,
+!             total_price=total_price,
+!             discount_total=discount_total,
+!             raw_image_url=raw_image_url,
+!             project_id=project_id,
+!         )
+!         self.session.add(ticket)
+!         await self.session.flush()
+  
+!         for item_data in items_data:
+!             item = Item(
+!                 ticket_id=ticket.id,
+!                 name=item_data["name"],
+!                 price=item_data["price"],
+!                 discounted_price=item_data["discounted_price"],
+!                 category_id=item_data.get("category_id"),
+!                 position=item_data.get("position", 0),
+!                 translation_en=item_data.get("translation_en"),
+!                 translation_ru=item_data.get("translation_ru"),
+!                 translation_pt=item_data.get("translation_pt"),
+!             )
+!             self.session.add(item)
+!             await self.session.flush()
+  
+!             for member_id in item_data["member_ids"]:
+!                 allocation = Allocation(item_id=item.id, member_id=member_id)
+!                 self.session.add(allocation)
+  
+!         await self.session.flush()
+!         return await self.get_ticket_with_detail(ticket.id)
+  
+>     async def get_ticket_with_detail(self, ticket_id: uuid.UUID) -> Ticket | None:
+!         result = await self.session.execute(
+!             select(Ticket)
+!             .where(Ticket.id == ticket_id)
+!             .options(
+!                 selectinload(Ticket.paid_by),
+!                 selectinload(Ticket.items).selectinload(Item.category),
+!                 selectinload(Ticket.items).selectinload(Item.allocations).selectinload(Allocation.member),
+!             )
+!         )
+!         return result.scalar_one_or_none()
+  
+>     async def list_tickets(
+>         self,
+>         page: int = 1,
+>         page_size: int = 20,
+>         from_date: datetime | None = None,
+>         to_date: datetime | None = None,
+>         member_id: uuid.UUID | None = None,
+>         category_id: uuid.UUID | None = None,
+>         project_id: uuid.UUID | None = None,
+>     ) -> tuple[list[Ticket], int]:
+!         stmt = select(Ticket).options(selectinload(Ticket.paid_by))
+!         if project_id:
+!             stmt = stmt.where(Ticket.project_id == project_id)
+!         if from_date:
+!             stmt = stmt.where(Ticket.purchased_at >= from_date)
+!         if to_date:
+!             stmt = stmt.where(Ticket.purchased_at <= to_date)
+!         if member_id:
+!             stmt = stmt.where(Ticket.paid_by_id == member_id)
+!         if category_id:
+!             stmt = stmt.join(Item, Item.ticket_id == Ticket.id).where(Item.category_id == category_id)
+  
+!         count_stmt = select(func.count()).select_from(stmt.subquery())
+!         total = (await self.session.execute(count_stmt)).scalar_one()
+!         stmt = stmt.order_by(Ticket.purchased_at.desc()).offset((page - 1) * page_size).limit(page_size)
+!         rows = (await self.session.execute(stmt)).scalars().unique().all()
+!         return list(rows), total

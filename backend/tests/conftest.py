@@ -57,6 +57,9 @@ from app.models.base import Base  # noqa: E402
 from app.models.app_user import AppUser  # noqa: E402
 from app.models.family_member import FamilyMember  # noqa: E402
 from app.models.category import Category  # noqa: E402
+from app.models.project import Project  # noqa: E402
+
+PORTUGAL_PROJECT_ID = uuid.UUID("a0000000-0000-0000-0000-000000000001")
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -99,9 +102,31 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     app.dependency_overrides.clear()
 
 
+@pytest_asyncio.fixture
+async def portugal_project(db_session: AsyncSession) -> Project:
+    """Seed the canonical Portugal-2026 project used across test suites."""
+    project = Project(
+        id=PORTUGAL_PROJECT_ID,
+        name="Portugal-2026",
+        default_language="pt",
+        bg_color="#006600",
+        text_color="#FFFFFF",
+        accent_color="#FFD700",
+        status="open",
+    )
+    db_session.add(project)
+    await db_session.flush()
+    return project
+
+
 @pytest.fixture
 def jwt_token() -> str:
-    payload = {"sub": "testuser", "role": "admin", "exp": datetime.now(timezone.utc) + timedelta(hours=1)}
+    payload = {
+        "sub": "testuser",
+        "role": "admin",
+        "project_id": str(PORTUGAL_PROJECT_ID),
+        "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+    }
     return jwt.encode(payload, TEST_PRIVATE_KEY, algorithm="RS256")
 
 
@@ -112,7 +137,12 @@ def auth_headers(jwt_token: str) -> dict:
 
 @pytest.fixture
 def user_jwt_token() -> str:
-    payload = {"sub": "readonly", "role": "user", "exp": datetime.now(timezone.utc) + timedelta(hours=1)}
+    payload = {
+        "sub": "readonly",
+        "role": "user",
+        "project_id": str(PORTUGAL_PROJECT_ID),
+        "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+    }
     return jwt.encode(payload, TEST_PRIVATE_KEY, algorithm="RS256")
 
 
@@ -131,16 +161,21 @@ async def seeded_user(db_session: AsyncSession) -> AppUser:
 
 
 @pytest_asyncio.fixture
-async def member(db_session: AsyncSession) -> FamilyMember:
+async def member(db_session: AsyncSession, portugal_project: Project) -> FamilyMember:
+    from app.models.project import ProjectMember
+
     m = FamilyMember(name="Alice")
     db_session.add(m)
+    await db_session.flush()
+    pm = ProjectMember(project_id=portugal_project.id, member_id=m.id)
+    db_session.add(pm)
     await db_session.flush()
     return m
 
 
 @pytest_asyncio.fixture
-async def category(db_session: AsyncSession) -> Category:
-    c = Category(name="Wine", color="#722F37")
+async def category(db_session: AsyncSession, portugal_project: Project) -> Category:
+    c = Category(name="Wine", color="#722F37", project_id=portugal_project.id)
     db_session.add(c)
     await db_session.flush()
     return c
@@ -148,6 +183,8 @@ async def category(db_session: AsyncSession) -> Category:
 
 @pytest.fixture
 def mock_ocr_client():
+    from unittest.mock import AsyncMock
+
     client = MagicMock()
     response = MagicMock()
     choice = MagicMock()
@@ -157,5 +194,5 @@ def mock_ocr_client():
         '"discount_total": "0.50", "total_price": "0.99"}'
     )
     response.choices = [choice]
-    client.chat.completions.create.return_value = response
+    client.chat.completions.create = AsyncMock(return_value=response)
     return client

@@ -4,7 +4,11 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
 import { login } from '../api/auth'
+import { getPublicProjects } from '../api/projects'
+import { useProject } from '../context/ProjectContext'
+import ProjectChooser from '../components/projects/ProjectChooser'
 import { isAxiosError } from 'axios'
 
 const LOCALES = [
@@ -23,12 +27,27 @@ type LoginFormData = z.infer<typeof loginSchema>
 export default function LoginPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const { setActiveProject } = useProject()
+  const [serverError, setServerError] = useState<string | null>(null)
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('')
+
+  const { data: publicProjects = [] } = useQuery({
+    queryKey: ['projects-public'],
+    queryFn: getPublicProjects,
+    onSuccess: (projects) => {
+      if (projects.length > 0 && !selectedProjectId) {
+        const first = projects.find((p) => p.status === 'open') ?? projects[0]
+        setSelectedProjectId(first.id)
+      }
+    },
+  })
+
+  const showProjectChooser = publicProjects.length > 1
 
   function handleLocaleChange(code: string) {
     i18n.changeLanguage(code)
     localStorage.setItem('i18nextLng', code)
   }
-  const [serverError, setServerError] = useState<string | null>(null)
 
   const {
     register,
@@ -41,7 +60,20 @@ export default function LoginPage() {
   async function onSubmit(data: LoginFormData) {
     setServerError(null)
     try {
-      await login(data.username, data.password)
+      const resp = await login(data.username, data.password, selectedProjectId || undefined)
+      if (resp.project_id) {
+        const matched = publicProjects.find((p) => p.id === resp.project_id)
+        if (matched) {
+          setActiveProject({
+            id: matched.id,
+            name: matched.name,
+            bg_color: matched.bg_color,
+            text_color: matched.text_color,
+            accent_color: matched.accent_color,
+            status: matched.status,
+          })
+        }
+      }
       navigate('/', { replace: true })
     } catch (err) {
       if (isAxiosError(err) && err.response?.status === 401) {
@@ -53,7 +85,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-pt-green flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[var(--project-bg,#006600)] flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🇵🇹</div>
@@ -62,6 +94,21 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+          {/* Project chooser */}
+          {showProjectChooser && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t('projects.switchProject')}
+              </label>
+              <ProjectChooser
+                projects={publicProjects}
+                value={selectedProjectId}
+                onChange={setSelectedProjectId}
+                className="w-full"
+              />
+            </div>
+          )}
+
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
               {t('auth.username')}

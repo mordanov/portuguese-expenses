@@ -28,8 +28,8 @@ class ReportService:
         self.member_repo = MemberRepository(session)
         self.payment_repo = PaymentRepository(session)
 
-    async def get_summary(self, from_date: date, to_date: date) -> SummaryResponse:
-        rows = await self.repo.summary_query(from_date=from_date, to_date=to_date)
+    async def get_summary(self, from_date: date, to_date: date, project_id: uuid.UUID | None = None) -> SummaryResponse:
+        rows = await self.repo.summary_query(from_date=from_date, to_date=to_date, project_id=project_id)
         members = [
             MemberSummary(
                 member=MemberRefResponse(id=row["member_id"], name=row["member_name"]),
@@ -40,8 +40,8 @@ class ReportService:
         ]
         return SummaryResponse(from_date=from_date, to_date=to_date, members=members)
 
-    async def get_itemized(self, from_date: date, to_date: date, member_id: uuid.UUID) -> ItemizedResponse:
-        rows = await self.repo.itemized_query(from_date=from_date, to_date=to_date, member_id=member_id)
+    async def get_itemized(self, from_date: date, to_date: date, member_id: uuid.UUID, project_id: uuid.UUID | None = None) -> ItemizedResponse:
+        rows = await self.repo.itemized_query(from_date=from_date, to_date=to_date, member_id=member_id, project_id=project_id)
 
         tickets_map: dict[uuid.UUID, dict] = {}
         for row in rows:
@@ -91,8 +91,8 @@ class ReportService:
             grand_total=str(grand_total.quantize(Decimal("0.01"))),
         )
 
-    async def get_category_report(self, from_date: date, to_date: date) -> CategoryReportResponse:
-        data = await self.repo.category_query(from_date=from_date, to_date=to_date)
+    async def get_category_report(self, from_date: date, to_date: date, project_id: uuid.UUID | None = None) -> CategoryReportResponse:
+        data = await self.repo.category_query(from_date=from_date, to_date=to_date, project_id=project_id)
         category_rows = data["categories"]
         uncategorized = Decimal(str(data["uncategorized"])).quantize(Decimal("0.01"))
 
@@ -122,13 +122,13 @@ class ReportService:
             uncategorized=str(uncategorized),
         )
 
-    async def get_payments_report(self, from_date: date, to_date: date) -> PaymentsReportResponse:
+    async def get_payments_report(self, from_date: date, to_date: date, project_id: uuid.UUID | None = None) -> PaymentsReportResponse:
         from datetime import datetime, timezone
 
         from_dt = datetime(from_date.year, from_date.month, from_date.day, tzinfo=timezone.utc)
         to_dt = datetime(to_date.year, to_date.month, to_date.day, 23, 59, 59, tzinfo=timezone.utc)
 
-        payments = await self.payment_repo.list_in_range(from_date=from_dt, to_date=to_dt)
+        payments = await self.payment_repo.list_in_range(from_date=from_dt, to_date=to_dt, project_id=project_id)
 
         all_member_ids = list({p.payer_id for p in payments} | {p.payee_id for p in payments})
         names: dict = {}

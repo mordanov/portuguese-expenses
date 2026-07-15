@@ -5,7 +5,7 @@ from decimal import Decimal
 import pytest
 
 
-async def _create_ticket_with_item(client, auth_headers, db_session, member):
+async def _create_ticket_with_item(client, auth_headers, db_session, member, project_id=None):
     from app.models.allocation import Allocation
     from app.models.item import Item
     from app.models.ticket import Ticket
@@ -16,6 +16,7 @@ async def _create_ticket_with_item(client, auth_headers, db_session, member):
         paid_by_id=member.id,
         total_price=Decimal("10.00"),
         discount_total=Decimal("0.00"),
+        project_id=project_id,
     )
     db_session.add(ticket)
     await db_session.flush()
@@ -38,22 +39,22 @@ async def _create_ticket_with_item(client, auth_headers, db_session, member):
 
 
 @pytest.mark.asyncio
-async def test_update_item_name(client, auth_headers, db_session, member):
-    _, item = await _create_ticket_with_item(client, auth_headers, db_session, member)
+async def test_update_item_name(client, auth_headers, db_session, member, portugal_project):
+    _, item = await _create_ticket_with_item(client, auth_headers, db_session, member, project_id=portugal_project.id)
     resp = await client.put(f"/items/{item.id}", json={"name": "Updated"}, headers=auth_headers)
     assert resp.status_code == 200
     assert resp.json()["name"] == "Updated"
 
 
 @pytest.mark.asyncio
-async def test_replace_allocations(client, auth_headers, db_session, member):
+async def test_replace_allocations(client, auth_headers, db_session, member, portugal_project):
     from app.models.family_member import FamilyMember
 
     bob = FamilyMember(name="ItemBob")
     db_session.add(bob)
     await db_session.flush()
 
-    _, item = await _create_ticket_with_item(client, auth_headers, db_session, member)
+    _, item = await _create_ticket_with_item(client, auth_headers, db_session, member, project_id=portugal_project.id)
     resp = await client.put(
         f"/items/{item.id}/allocations",
         json={"member_ids": [str(bob.id)]},
@@ -66,8 +67,8 @@ async def test_replace_allocations(client, auth_headers, db_session, member):
 
 
 @pytest.mark.asyncio
-async def test_replace_allocations_empty_rejected(client, auth_headers, db_session, member):
-    _, item = await _create_ticket_with_item(client, auth_headers, db_session, member)
+async def test_replace_allocations_empty_rejected(client, auth_headers, db_session, member, portugal_project):
+    _, item = await _create_ticket_with_item(client, auth_headers, db_session, member, project_id=portugal_project.id)
     resp = await client.put(
         f"/items/{item.id}/allocations",
         json={"member_ids": []},

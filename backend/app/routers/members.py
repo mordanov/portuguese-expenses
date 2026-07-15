@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
-from app.dependencies import get_current_user, require_admin
+from app.dependencies import get_current_project_id, get_current_user, require_admin
 from app.schemas.member import MemberCreate, MemberListResponse, MemberResponse, MemberUpdate
 from app.services.member_service import MemberService
 
@@ -19,9 +19,16 @@ async def list_members(
     page_size: int = Query(default=20, ge=1, le=100),
     session: AsyncSession = Depends(get_async_session),
     _: str = Depends(get_current_user),
+    project_id: uuid.UUID | None = Depends(get_current_project_id),
 ) -> MemberListResponse:
     service = MemberService(session)
-    members, total = await service.list_members(active_only=active_only, can_pay_only=can_pay_only, page=page, page_size=page_size)
+    members, total = await service.list_members(
+        active_only=active_only,
+        can_pay_only=can_pay_only,
+        page=page,
+        page_size=page_size,
+        project_id=project_id,
+    )
     return MemberListResponse(
         items=[MemberResponse.model_validate(m) for m in members],
         total=total,

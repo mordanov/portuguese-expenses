@@ -1,0 +1,119 @@
+import uuid
+from datetime import datetime
+
+from pydantic import BaseModel, Field, field_validator
+
+
+def _validate_hex_color(v: str | None) -> str | None:
+    if v is None:
+        return v
+    if not (len(v) == 7 and v.startswith("#") and all(c in "0123456789ABCDEFabcdef" for c in v[1:])):
+        raise ValueError("Color must be a 6-digit hex string like #RRGGBB")
+    return v.upper()
+
+
+class ProjectCreate(BaseModel):
+    name: str
+    default_language: str = "pt"
+    bg_color: str = "#006600"
+    text_color: str = "#FFFFFF"
+    accent_color: str = "#FFD700"
+
+    @field_validator("bg_color", "text_color", "accent_color")
+    @classmethod
+    def validate_color(cls, v: str) -> str:
+        result = _validate_hex_color(v)
+        return result if result is not None else v
+
+
+class ProjectUpdate(BaseModel):
+    name: str | None = None
+    default_language: str | None = None
+    bg_color: str | None = None
+    text_color: str | None = None
+    accent_color: str | None = None
+
+    @field_validator("bg_color", "text_color", "accent_color", mode="before")
+    @classmethod
+    def validate_color(cls, v: str | None) -> str | None:
+        return _validate_hex_color(v)
+
+
+class ProjectResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+    default_language: str
+    bg_color: str
+    text_color: str
+    accent_color: str
+    status: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ProjectPublicResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+    bg_color: str
+    text_color: str
+    accent_color: str
+    status: str
+
+    model_config = {"from_attributes": True}
+
+
+class ProjectListResponse(BaseModel):
+    items: list[ProjectResponse]
+    total: int
+
+
+class ProjectPublicListResponse(BaseModel):
+    items: list[ProjectPublicResponse]
+
+
+class ColorSuggestRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=200)
+
+
+class ColorSuggestResponse(BaseModel):
+    bg_color: str
+    text_color: str
+    accent_color: str
+
+    @field_validator("bg_color", "text_color", "accent_color")
+    @classmethod
+    def validate_color(cls, v: str) -> str:
+        result = _validate_hex_color(v)
+        return result if result is not None else v
+
+
+class ProjectStatusResponse(BaseModel):
+    id: uuid.UUID
+    status: str
+
+
+class ProjectMemberAdd(BaseModel):
+    member_id: uuid.UUID
+
+
+class ProjectMemberResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+    is_active: bool
+    joined_at: datetime
+
+
+class ProjectMemberListResponse(BaseModel):
+    items: list[ProjectMemberResponse]
+    total: int
+
+
+class ProjectMemberJoinResponse(BaseModel):
+    member_id: uuid.UUID
+    project_id: uuid.UUID
+    joined_at: datetime
+
+
+class SwitchProjectRequest(BaseModel):
+    project_id: uuid.UUID

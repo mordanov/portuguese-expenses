@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { I18nextProvider } from 'react-i18next'
 import i18n from '../../src/i18n'
 import LoginPage from '../../src/pages/LoginPage'
+import { ProjectProvider } from '../../src/context/ProjectContext'
 
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
@@ -17,9 +18,11 @@ function renderLogin() {
   return render(
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
-        <MemoryRouter>
-          <LoginPage />
-        </MemoryRouter>
+        <ProjectProvider>
+          <MemoryRouter>
+            <LoginPage />
+          </MemoryRouter>
+        </ProjectProvider>
       </I18nextProvider>
     </QueryClientProvider>,
   )
@@ -56,5 +59,22 @@ describe('LoginPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /log in/i }))
     await waitFor(() => expect(screen.getAllByText(/this field is required/i).length).toBeGreaterThan(0))
     expect(mockNavigate).not.toHaveBeenCalled()
+  })
+
+  it('shows project chooser when multiple projects available', async () => {
+    renderLogin()
+    await waitFor(() => expect(screen.getByText('Portugal-2026')).toBeInTheDocument())
+    expect(screen.getByText('France-2026')).toBeInTheDocument()
+    // The chooser is a combobox/select
+    expect(screen.getByRole('combobox')).toBeInTheDocument()
+  })
+
+  it('includes project_id in login body when project selected', async () => {
+    renderLogin()
+    await waitFor(() => expect(screen.getByLabelText(/username/i)).toBeInTheDocument())
+    await userEvent.type(screen.getByLabelText(/username/i), 'admin')
+    await userEvent.type(screen.getByLabelText(/password/i), 'changeme')
+    await userEvent.click(screen.getByRole('button', { name: /log in/i }))
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true }))
   })
 })

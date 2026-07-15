@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,9 +12,10 @@ class BalanceService:
         self.repo = BalanceRepository(session)
 
     async def get_balances(
-        self, from_date: datetime | None = None, to_date: datetime | None = None
+        self, from_date: datetime | None = None, to_date: datetime | None = None,
+        project_id: uuid.UUID | None = None,
     ) -> BalanceResponse:
-        rows = await self.repo.get_pairwise_balances(from_date=from_date, to_date=to_date)
+        rows = await self.repo.get_pairwise_balances(from_date=from_date, to_date=to_date, project_id=project_id)
         entries = [
             BalanceEntry(
                 debtor=MemberRefResponse(id=row["debtor_id"], name=row["debtor_name"]),

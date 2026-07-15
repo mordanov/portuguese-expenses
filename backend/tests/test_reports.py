@@ -5,7 +5,7 @@ from decimal import Decimal
 import pytest
 
 
-async def _seed_ticket_with_items(db_session, payer, members_per_item, items_data, days_offset=0):
+async def _seed_ticket_with_items(db_session, payer, members_per_item, items_data, days_offset=0, project_id=None):
     from app.models.allocation import Allocation
     from app.models.item import Item
     from app.models.ticket import Ticket
@@ -17,6 +17,7 @@ async def _seed_ticket_with_items(db_session, payer, members_per_item, items_dat
         paid_by_id=payer.id,
         total_price=total,
         discount_total=Decimal("0.00"),
+        project_id=project_id,
     )
     db_session.add(ticket)
     await db_session.flush()
@@ -41,7 +42,7 @@ async def _seed_ticket_with_items(db_session, payer, members_per_item, items_dat
 
 
 @pytest.mark.asyncio
-async def test_summary_report(client, auth_headers, db_session, member):
+async def test_summary_report(client, auth_headers, db_session, member, portugal_project):
     from app.models.family_member import FamilyMember
 
     bob = FamilyMember(name="ReportBob")
@@ -53,6 +54,7 @@ async def test_summary_report(client, auth_headers, db_session, member):
         member,
         [member.id, bob.id],
         [{"name": "Shared Item", "price": "20.00"}],
+        project_id=portugal_project.id,
     )
 
     resp = await client.get(
@@ -68,12 +70,13 @@ async def test_summary_report(client, auth_headers, db_session, member):
 
 
 @pytest.mark.asyncio
-async def test_category_report(client, auth_headers, db_session, member, category):
+async def test_category_report(client, auth_headers, db_session, member, category, portugal_project):
     await _seed_ticket_with_items(
         db_session,
         member,
         [member.id],
         [{"name": "Wine Item", "price": "30.00", "category_id": category.id}],
+        project_id=portugal_project.id,
     )
 
     resp = await client.get(

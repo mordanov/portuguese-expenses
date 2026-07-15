@@ -9,7 +9,8 @@
     "balances": "Saldos",
     "users": "Utilizadores",
     "settings": "Definições",
-    "logout": "Sair"
+    "logout": "Sair",
+    "projects": "Projetos"
   },
   "auth": {
     "username": "Utilizador",
@@ -266,6 +267,24 @@
     "selfBlockError": "Não pode bloquear-se a si próprio",
     "lastLogin": "Último acesso",
     "neverLoggedIn": "Nunca"
+  },
+  "projects": {
+    "title": "Projetos",
+    "new": "Novo Projeto",
+    "edit": "Editar Projeto",
+    "close": "Fechar",
+    "reopen": "Reabrir",
+    "closed": "Fechado",
+    "open": "Aberto",
+    "suggestColors": "Sugerir Cores",
+    "language": "Idioma Padrão",
+    "members": "Membros",
+    "members.add": "Adicionar Membro",
+    "members.remove": "Remover",
+    "members.empty": "Sem membros associados.",
+    "colorScheme": "Esquema de Cores",
+    "switchProject": "Seleccionar Projeto",
+    "empty": "Sem projetos ainda."
   },
   "common": {
     "loading": "A carregar…",

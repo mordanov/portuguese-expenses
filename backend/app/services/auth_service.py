@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -15,10 +16,12 @@ def hash_password(plain: str) -> str:
     return bcrypt.hashpw(plain.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
-def create_access_token(username: str, role: str = "admin") -> str:
+def create_access_token(username: str, role: str = "admin", project_id: uuid.UUID | None = None) -> str:
     settings = get_settings()
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_expire_minutes)
-    payload = {"sub": username, "role": role, "exp": expire}
+    payload: dict = {"sub": username, "role": role, "exp": expire}
+    if project_id is not None:
+        payload["project_id"] = str(project_id)
     return jwt.encode(payload, settings.jwt_private_key_parsed, algorithm=settings.jwt_algorithm)
 
 

@@ -1,0 +1,23 @@
+> import uuid
+> from typing import Literal
+  
+> from pydantic import BaseModel
+  
+  
+> class OffsetRuleCreateRequest(BaseModel):
+>     type: Literal["absorb", "transfer"]
+>     person_a_id: uuid.UUID
+>     person_b_id: uuid.UUID
+  
+  
+> class OffsetRuleResponse(BaseModel):
+>     id: uuid.UUID
+>     type: str
+>     person_a_id: uuid.UUID
+>     person_b_id: uuid.UUID
+  
+>     model_config = {"from_attributes": True}
+  
+  
+> class OffsetRulesListResponse(BaseModel):
+>     items: list[OffsetRuleResponse]

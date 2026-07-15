@@ -9,7 +9,8 @@
     "balances": "Balances",
     "users": "Users",
     "settings": "Settings",
-    "logout": "Logout"
+    "logout": "Logout",
+    "projects": "Projects"
   },
   "auth": {
     "username": "Username",
@@ -266,6 +267,24 @@
     "selfBlockError": "You cannot block yourself",
     "lastLogin": "Last login",
     "neverLoggedIn": "Never"
+  },
+  "projects": {
+    "title": "Projects",
+    "new": "New Project",
+    "edit": "Edit Project",
+    "close": "Close",
+    "reopen": "Reopen",
+    "closed": "Closed",
+    "open": "Open",
+    "suggestColors": "Suggest Colors",
+    "language": "Default Language",
+    "members": "Members",
+    "members.add": "Add Member",
+    "members.remove": "Remove",
+    "members.empty": "No members linked.",
+    "colorScheme": "Color Scheme",
+    "switchProject": "Select Project",
+    "empty": "No projects yet."
   },
   "common": {
     "loading": "Loading…",

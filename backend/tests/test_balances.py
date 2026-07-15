@@ -8,7 +8,7 @@ from decimal import Decimal
 import pytest
 
 
-async def _seed_ticket(db_session, payer, other_member, price, discount=Decimal("0.00"), days_offset=0):
+async def _seed_ticket(db_session, payer, other_member, price, discount=Decimal("0.00"), days_offset=0, project_id=None):
     from app.models.allocation import Allocation
     from app.models.item import Item
     from app.models.ticket import Ticket
@@ -21,6 +21,7 @@ async def _seed_ticket(db_session, payer, other_member, price, discount=Decimal(
         paid_by_id=payer.id,
         total_price=price,
         discount_total=discount,
+        project_id=project_id,
     )
     db_session.add(ticket)
     await db_session.flush()
@@ -42,7 +43,7 @@ async def _seed_ticket(db_session, payer, other_member, price, discount=Decimal(
 
 
 @pytest.mark.asyncio
-async def test_net_balance_correct(client, auth_headers, db_session):
+async def test_net_balance_correct(client, auth_headers, db_session, portugal_project):
     from app.models.family_member import FamilyMember
 
     alice = FamilyMember(name="Alice")
@@ -52,9 +53,9 @@ async def test_net_balance_correct(client, auth_headers, db_session):
     await db_session.flush()
 
     # Alice paid €30, Bob consumed — Bob owes Alice €30
-    await _seed_ticket(db_session, alice, bob, Decimal("30.00"))
+    await _seed_ticket(db_session, alice, bob, Decimal("30.00"), project_id=portugal_project.id)
     # Bob paid €10, Alice consumed — Alice owes Bob €10
-    await _seed_ticket(db_session, bob, alice, Decimal("10.00"), days_offset=1)
+    await _seed_ticket(db_session, bob, alice, Decimal("10.00"), days_offset=1, project_id=portugal_project.id)
 
     resp = await client.get("/balances", headers=auth_headers)
     assert resp.status_code == 200
@@ -67,7 +68,7 @@ async def test_net_balance_correct(client, auth_headers, db_session):
 
 
 @pytest.mark.asyncio
-async def test_zero_balance_omitted(client, auth_headers, db_session):
+async def test_zero_balance_omitted(client, auth_headers, db_session, portugal_project):
     from app.models.family_member import FamilyMember
 
     alice = FamilyMember(name="AliceZ")
@@ -76,8 +77,8 @@ async def test_zero_balance_omitted(client, auth_headers, db_session):
     db_session.add(bob)
     await db_session.flush()
 
-    await _seed_ticket(db_session, alice, bob, Decimal("20.00"))
-    await _seed_ticket(db_session, bob, alice, Decimal("20.00"), days_offset=1)
+    await _seed_ticket(db_session, alice, bob, Decimal("20.00"), project_id=portugal_project.id)
+    await _seed_ticket(db_session, bob, alice, Decimal("20.00"), days_offset=1, project_id=portugal_project.id)
 
     resp = await client.get("/balances", headers=auth_headers)
     balances = resp.json()["balances"]
@@ -97,7 +98,7 @@ async def test_no_tickets_returns_empty(client, auth_headers):
 
 
 @pytest.mark.asyncio
-async def test_t102_net_balance_two_tickets_exact_amount(client, auth_headers, db_session):
+async def test_t102_net_balance_two_tickets_exact_amount(client, auth_headers, db_session, portugal_project):
     """T102: Seed two tickets via API fixtures; balance endpoint must return exact net direction and amount.
 
     Scenario:
@@ -113,8 +114,8 @@ async def test_t102_net_balance_two_tickets_exact_amount(client, auth_headers, d
     db_session.add(bob)
     await db_session.flush()
 
-    await _seed_ticket(db_session, alice, bob, Decimal("30.00"), days_offset=0)
-    await _seed_ticket(db_session, bob, alice, Decimal("10.00"), days_offset=1)
+    await _seed_ticket(db_session, alice, bob, Decimal("30.00"), days_offset=0, project_id=portugal_project.id)
+    await _seed_ticket(db_session, bob, alice, Decimal("10.00"), days_offset=1, project_id=portugal_project.id)
 
     resp = await client.get("/balances", headers=auth_headers)
     assert resp.status_code == 200
@@ -141,7 +142,7 @@ async def test_t102_net_balance_two_tickets_exact_amount(client, auth_headers, d
 
 
 @pytest.mark.asyncio
-async def test_t102_zero_balance_row_omitted(client, auth_headers, db_session):
+async def test_t102_zero_balance_row_omitted(client, auth_headers, db_session, portugal_project):
     """T102: When two members owe each other equally, no balance row is returned."""
     from app.models.family_member import FamilyMember
 
@@ -151,8 +152,8 @@ async def test_t102_zero_balance_row_omitted(client, auth_headers, db_session):
     db_session.add(bob)
     await db_session.flush()
 
-    await _seed_ticket(db_session, alice, bob, Decimal("15.00"), days_offset=0)
-    await _seed_ticket(db_session, bob, alice, Decimal("15.00"), days_offset=1)
+    await _seed_ticket(db_session, alice, bob, Decimal("15.00"), days_offset=0, project_id=portugal_project.id)
+    await _seed_ticket(db_session, bob, alice, Decimal("15.00"), days_offset=1, project_id=portugal_project.id)
 
     resp = await client.get("/balances", headers=auth_headers)
     assert resp.status_code == 200
@@ -169,7 +170,7 @@ async def test_t102_zero_balance_row_omitted(client, auth_headers, db_session):
 
 
 @pytest.mark.asyncio
-async def test_t102_date_range_excludes_older_ticket(client, auth_headers, db_session):
+async def test_t102_date_range_excludes_older_ticket(client, auth_headers, db_session, portugal_project):
     """T102: Date range filter must exclude tickets outside the range from balance calculation."""
     from app.models.family_member import FamilyMember
 
@@ -180,9 +181,9 @@ async def test_t102_date_range_excludes_older_ticket(client, auth_headers, db_se
     await db_session.flush()
 
     # May ticket: Alice pays €50 for Bob
-    await _seed_ticket(db_session, alice, bob, Decimal("50.00"), days_offset=0)   # May 1
+    await _seed_ticket(db_session, alice, bob, Decimal("50.00"), days_offset=0, project_id=portugal_project.id)
     # June ticket: Alice pays €100 for Bob (days_offset=31 → June 1)
-    await _seed_ticket(db_session, alice, bob, Decimal("100.00"), days_offset=31)
+    await _seed_ticket(db_session, alice, bob, Decimal("100.00"), days_offset=31, project_id=portugal_project.id)
 
     # Filter to May only
     resp = await client.get(
@@ -204,7 +205,7 @@ async def test_t102_date_range_excludes_older_ticket(client, auth_headers, db_se
 
 
 @pytest.mark.asyncio
-async def test_date_range_filter(client, auth_headers, db_session):
+async def test_date_range_filter(client, auth_headers, db_session, portugal_project):
     from app.models.family_member import FamilyMember
 
     alice = FamilyMember(name="AliceDR")
@@ -214,9 +215,9 @@ async def test_date_range_filter(client, auth_headers, db_session):
     await db_session.flush()
 
     # Ticket in May
-    await _seed_ticket(db_session, alice, bob, Decimal("50.00"), days_offset=0)
+    await _seed_ticket(db_session, alice, bob, Decimal("50.00"), days_offset=0, project_id=portugal_project.id)
     # Ticket in June (days_offset=31 → June 1)
-    old_ticket = await _seed_ticket(db_session, alice, bob, Decimal("100.00"), days_offset=31)
+    old_ticket = await _seed_ticket(db_session, alice, bob, Decimal("100.00"), days_offset=31, project_id=portugal_project.id)
 
     # Filter to May only
     resp = await client.get(

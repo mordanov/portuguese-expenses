@@ -26,6 +26,7 @@ class TicketRepository(BaseRepository[Ticket]):
         discount_total: Decimal,
         raw_image_url: str | None,
         items_data: list[dict],
+        project_id: uuid.UUID | None = None,
     ) -> Ticket:
         ticket = Ticket(
             store_name=store_name,
@@ -34,6 +35,7 @@ class TicketRepository(BaseRepository[Ticket]):
             total_price=total_price,
             discount_total=discount_total,
             raw_image_url=raw_image_url,
+            project_id=project_id,
         )
         self.session.add(ticket)
         await self.session.flush()
@@ -80,8 +82,11 @@ class TicketRepository(BaseRepository[Ticket]):
         to_date: datetime | None = None,
         member_id: uuid.UUID | None = None,
         category_id: uuid.UUID | None = None,
+        project_id: uuid.UUID | None = None,
     ) -> tuple[list[Ticket], int]:
         stmt = select(Ticket).options(selectinload(Ticket.paid_by))
+        if project_id:
+            stmt = stmt.where(Ticket.project_id == project_id)
         if from_date:
             stmt = stmt.where(Ticket.purchased_at >= from_date)
         if to_date:

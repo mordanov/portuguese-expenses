@@ -6,7 +6,7 @@ from decimal import Decimal
 import pytest
 
 
-async def _seed_ticket(db_session, payer, consumer, price):
+async def _seed_ticket(db_session, payer, consumer, price, project_id=None):
     from app.models.allocation import Allocation
     from app.models.item import Item
     from app.models.ticket import Ticket
@@ -18,6 +18,7 @@ async def _seed_ticket(db_session, payer, consumer, price):
         paid_by_id=payer.id,
         total_price=price,
         discount_total=Decimal("0.00"),
+        project_id=project_id,
     )
     db_session.add(ticket)
     await db_session.flush()
@@ -43,11 +44,11 @@ async def _members(db_session, name_a, name_b):
 
 
 @pytest.mark.asyncio
-async def test_payment_reduces_balance(client, auth_headers, db_session):
+async def test_payment_reduces_balance(client, auth_headers, db_session, portugal_project):
     """Partial payment reduces the outstanding balance."""
     alice, bob = await _members(db_session, "AlicePay1", "BobPay1")
     # Bob owes Alice €100
-    await _seed_ticket(db_session, alice, bob, Decimal("100.00"))
+    await _seed_ticket(db_session, alice, bob, Decimal("100.00"), project_id=portugal_project.id)
 
     resp = await client.post(
         "/payments",
@@ -71,10 +72,10 @@ async def test_payment_reduces_balance(client, auth_headers, db_session):
 
 
 @pytest.mark.asyncio
-async def test_payment_clears_balance(client, auth_headers, db_session):
+async def test_payment_clears_balance(client, auth_headers, db_session, portugal_project):
     """Exact payment zeroes the balance — row must disappear."""
     alice, bob = await _members(db_session, "AlicePay2", "BobPay2")
-    await _seed_ticket(db_session, alice, bob, Decimal("100.00"))
+    await _seed_ticket(db_session, alice, bob, Decimal("100.00"), project_id=portugal_project.id)
 
     await client.post(
         "/payments",
@@ -92,11 +93,11 @@ async def test_payment_clears_balance(client, auth_headers, db_session):
 
 
 @pytest.mark.asyncio
-async def test_overpayment_reverses_direction(client, auth_headers, db_session):
+async def test_overpayment_reverses_direction(client, auth_headers, db_session, portugal_project):
     """Overpayment flips the direction — creditor now owes debtor the excess."""
     alice, bob = await _members(db_session, "AlicePay3", "BobPay3")
     # Bob owes Alice €100
-    await _seed_ticket(db_session, alice, bob, Decimal("100.00"))
+    await _seed_ticket(db_session, alice, bob, Decimal("100.00"), project_id=portugal_project.id)
 
     # Bob pays €300 — excess of €200 means Alice now owes Bob €200
     await client.post(

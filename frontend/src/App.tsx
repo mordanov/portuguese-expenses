@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { isAuthenticated, isAdmin } from './api/auth'
+import { ProjectProvider } from './context/ProjectContext'
 import Layout from './components/layout/Layout'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
@@ -11,6 +12,7 @@ import CategoriesPage from './pages/CategoriesPage'
 import ReportsPage from './pages/ReportsPage'
 import BalancesPage from './pages/BalancesPage'
 import UsersPage from './pages/UsersPage'
+import ProjectsPage from './pages/ProjectsPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated()) {
@@ -27,6 +29,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
+    <ProjectProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
@@ -54,9 +57,18 @@ export default function App() {
               </AdminRoute>
             }
           />
+          <Route
+            path="projects"
+            element={
+              <AdminRoute>
+                <ProjectsPage />
+              </AdminRoute>
+            }
+          />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </ProjectProvider>
   )
 }

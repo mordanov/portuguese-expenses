@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_create_category(client, auth_headers):
+async def test_create_category(client, auth_headers, portugal_project):
     resp = await client.post("/categories", json={"name": "Food", "color": "#00FF00"}, headers=auth_headers)
     assert resp.status_code == 201
     data = resp.json()
@@ -31,7 +31,7 @@ async def test_delete_unreferenced_category(client, auth_headers, category):
 
 
 @pytest.mark.asyncio
-async def test_delete_referenced_category_blocked(client, auth_headers, db_session, member, category):
+async def test_delete_referenced_category_blocked(client, auth_headers, db_session, member, category, portugal_project):
     from decimal import Decimal
     from app.models.item import Item
     from app.models.ticket import Ticket
@@ -42,6 +42,7 @@ async def test_delete_referenced_category_blocked(client, auth_headers, db_sessi
         paid_by_id=member.id,
         total_price=Decimal("5.00"),
         discount_total=Decimal("0.00"),
+        project_id=portugal_project.id,
     )
     db_session.add(ticket)
     await db_session.flush()
@@ -61,7 +62,7 @@ async def test_delete_referenced_category_blocked(client, auth_headers, db_sessi
 
 
 @pytest.mark.asyncio
-async def test_invalid_color(client, auth_headers):
+async def test_invalid_color(client, auth_headers, portugal_project):
     resp = await client.post("/categories", json={"name": "Bad", "color": "notacolor"}, headers=auth_headers)
     assert resp.status_code == 422
 
@@ -76,7 +77,7 @@ async def test_duplicate_category_name(client, auth_headers, category):
 
 
 @pytest.mark.asyncio
-async def test_category_deletion_blocked_when_item_references_it(client, auth_headers, db_session, member, category):
+async def test_category_deletion_blocked_when_item_references_it(client, auth_headers, db_session, member, category, portugal_project):
     """T067: DELETE /categories/{id} must return 409 when any item references the category."""
     from decimal import Decimal
     from datetime import datetime, timezone
@@ -89,6 +90,7 @@ async def test_category_deletion_blocked_when_item_references_it(client, auth_he
         paid_by_id=member.id,
         total_price=Decimal("8.00"),
         discount_total=Decimal("0.00"),
+        project_id=portugal_project.id,
     )
     db_session.add(ticket)
     await db_session.flush()
@@ -109,7 +111,7 @@ async def test_category_deletion_blocked_when_item_references_it(client, auth_he
 
 
 @pytest.mark.asyncio
-async def test_unreferenced_category_can_be_deleted(client, auth_headers):
+async def test_unreferenced_category_can_be_deleted(client, auth_headers, portugal_project):
     """T067: DELETE /categories/{id} must succeed (204) when no item references the category."""
     create_resp = await client.post(
         "/categories", json={"name": "Temporary", "color": "#AAAAAA"}, headers=auth_headers
@@ -122,7 +124,7 @@ async def test_unreferenced_category_can_be_deleted(client, auth_headers):
 
 
 @pytest.mark.asyncio
-async def test_deleted_category_absent_from_list(client, auth_headers):
+async def test_deleted_category_absent_from_list(client, auth_headers, portugal_project):
     """T067: After deletion, category must not appear in GET /categories."""
     create_resp = await client.post(
         "/categories", json={"name": "ToDelete", "color": "#111111"}, headers=auth_headers

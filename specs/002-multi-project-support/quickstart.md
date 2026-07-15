@@ -73,3 +73,29 @@ docker compose exec frontend npm test
 | `JWT_PUBLIC_KEY`  | RS256 public key                         |
 | `DATABASE_URL`    | PostgreSQL connection string             |
 | `FRONTEND_URL`    | CORS allowed origin                      |
+
+No new environment variables are required for this feature.
+
+## OCR Default Language Values
+
+Each project has a `default_language` field (set at creation). Accepted values:
+
+| Value    | Language    |
+|----------|-------------|
+| `pt`     | Portuguese  |
+| `fr`     | French      |
+| `es`     | Spanish     |
+| `de`     | German      |
+| `en`     | English     |
+| `other`  | Unknown / other — OCR uses generic extraction without language hint |
+
+The active project's `default_language` is automatically injected into the OCR prompt as
+`"The receipt is written in {language}."` This improves extraction accuracy for non-English receipts.
+
+## Deployment Note: Pre-Migration Token Invalidation
+
+On first deploy of this feature, any admin tokens issued before migration 010 lack the
+`project_id` and `role` JWT claims. These tokens expire within the configured
+`JWT_EXPIRE_MINUTES` window (default: 480 min). All users must log out and log back in
+after the migration to receive a token with the updated claims. No manual revocation
+step is required — tokens naturally expire.

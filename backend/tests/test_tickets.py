@@ -1,6 +1,6 @@
 import io
 from decimal import Decimal
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -15,12 +15,12 @@ def _make_mock_ocr():
         '"discount_total": "0.50", "total_price": "0.99"}'
     )
     response.choices = [choice]
-    client.chat.completions.create.return_value = response
+    client.chat.completions.create = AsyncMock(return_value=response)
     return client
 
 
 @pytest.mark.asyncio
-async def test_upload_valid_jpeg_returns_draft(client, auth_headers):
+async def test_upload_valid_jpeg_returns_draft(client, auth_headers, portugal_project):
     from app.main import app
     from app.routers.tickets import get_ocr_service
     from app.services.ocr_service import OCRService
@@ -47,7 +47,7 @@ async def test_upload_valid_jpeg_returns_draft(client, auth_headers):
 
 
 @pytest.mark.asyncio
-async def test_upload_exe_rejected(client, auth_headers):
+async def test_upload_exe_rejected(client, auth_headers, portugal_project):
     from app.main import app
     from app.routers.tickets import get_ocr_service
     from app.services.ocr_service import OCRService

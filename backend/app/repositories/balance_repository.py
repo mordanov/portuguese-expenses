@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from decimal import Decimal
 
@@ -16,7 +17,8 @@ class BalanceRepository:
         self.session = session
 
     async def get_pairwise_balances(
-        self, from_date: datetime | None = None, to_date: datetime | None = None
+        self, from_date: datetime | None = None, to_date: datetime | None = None,
+        project_id: "uuid.UUID | None" = None,
     ) -> list[dict]:
         """
         Two-pass computation:
@@ -41,6 +43,8 @@ class BalanceRepository:
             .join(alloc_count_subq, alloc_count_subq.c.item_id == Item.id)
             .where(Allocation.member_id != Ticket.paid_by_id)
         )
+        if project_id:
+            stmt = stmt.where(Ticket.project_id == project_id)
         if from_date:
             stmt = stmt.where(Ticket.purchased_at >= from_date)
         if to_date:
@@ -60,7 +64,7 @@ class BalanceRepository:
         # gross key is (creditor_id, debtor_id); a payment where payer=debtor, payee=creditor
         # reduces gross[(creditor, debtor)] — i.e. adds to the reverse direction.
         payment_repo = PaymentRepository(self.session)
-        payment_rows = await payment_repo.get_pairwise_totals(from_date=from_date, to_date=to_date)
+        payment_rows = await payment_repo.get_pairwise_totals(from_date=from_date, to_date=to_date, project_id=project_id)
         for pr in payment_rows:
             # payer paid payee → reduces what payer owes payee, i.e. gross[(payee, payer)]
             key = (pr["payee_id"], pr["payer_id"])
