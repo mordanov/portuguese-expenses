@@ -10,6 +10,7 @@ const LOCALES = [
   { code: 'en', label: 'EN', flag: '🇬🇧' },
   { code: 'ru', label: 'RU', flag: '🇷🇺' },
   { code: 'pt', label: 'PT', flag: '🇵🇹' },
+  { code: 'fr', label: 'FR', flag: '🇫🇷' },
 ]
 
 const MAIN_NAV = [
@@ -100,7 +101,7 @@ export default function Navbar() {
                 </svg>
               </button>
               <NavLink to="/" className={`font-bold text-lg tracking-tight whitespace-nowrap text-[var(--project-accent,#FFD700)]`}>
-                🇵🇹 <span className="hidden sm:inline">{activeProject?.name ?? t('nav.title')}</span>
+                {activeProject?.emoji ?? '🌍'} <span className="hidden sm:inline">{activeProject?.name ?? t('nav.title')}</span>
               </NavLink>
 
               {/* Desktop nav links */}
@@ -193,23 +194,19 @@ export default function Navbar() {
                 ))}
               </select>
 
-              {/* Desktop: buttons */}
-              <div className="hidden md:flex items-center gap-1">
-                {LOCALES.map(({ code, label, flag }) => (
-                  <button
-                    key={code}
-                    onClick={() => handleLocaleChange(code)}
-                    className={`text-sm px-2 py-1 rounded transition-colors ${
-                      i18n.language.startsWith(code)
-                        ? activeNavBg + ' font-bold'
-                        : `${navbarText} hover:bg-white/20`
-                    }`}
-                    aria-label={`Switch to ${label}`}
-                  >
+              {/* Desktop: language combobox */}
+              <select
+                value={currentLocale.code}
+                onChange={(e) => handleLocaleChange(e.target.value)}
+                className="hidden md:block bg-white/10 border border-white/30 text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-white text-[var(--project-text,#FFFFFF)]"
+                aria-label="Language"
+              >
+                {LOCALES.map(({ code, flag, label }) => (
+                  <option key={code} value={code} className="text-black bg-white">
                     {flag} {label}
-                  </button>
+                  </option>
                 ))}
-              </div>
+              </select>
 
               <button
                 onClick={handleLogout}
@@ -231,7 +228,7 @@ export default function Navbar() {
             {/* Drawer header */}
             <div className="flex items-center justify-between px-4 h-16 border-b border-white/20">
               <span className={`font-bold text-lg text-[var(--project-accent,#FFD700)]`}>
-                🇵🇹 {activeProject?.name ?? t('nav.title')}
+                {activeProject?.emoji ?? '🌍'} {activeProject?.name ?? t('nav.title')}
               </span>
               <button
                 onClick={() => setMenuOpen(false)}
@@ -316,21 +313,18 @@ export default function Navbar() {
 
             {/* Drawer footer: language + logout */}
             <div className="border-t border-white/20 px-4 py-4 space-y-3">
-              <div className="flex gap-1">
+              <select
+                value={currentLocale.code}
+                onChange={(e) => handleLocaleChange(e.target.value)}
+                className="w-full bg-white/10 border border-white/30 text-white text-sm rounded-lg px-3 py-2 focus:outline-none"
+                aria-label="Language"
+              >
                 {LOCALES.map(({ code, flag, label }) => (
-                  <button
-                    key={code}
-                    onClick={() => handleLocaleChange(code)}
-                    className={`flex-1 text-sm py-2 rounded-lg transition-colors ${
-                      i18n.language.startsWith(code)
-                        ? activeNavBg + ' font-bold'
-                        : `${navbarText} hover:bg-white/20 border border-white/30`
-                    }`}
-                  >
+                  <option key={code} value={code} className="text-black bg-white">
                     {flag} {label}
-                  </button>
+                  </option>
                 ))}
-              </div>
+              </select>
               <button
                 onClick={() => { setMenuOpen(false); handleLogout() }}
                 className={`w-full text-sm ${navbarText} hover:bg-white/20 px-4 py-2 rounded-lg transition-colors border border-white/30`}

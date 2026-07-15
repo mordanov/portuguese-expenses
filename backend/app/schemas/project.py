@@ -15,6 +15,7 @@ def _validate_hex_color(v: str | None) -> str | None:
 class ProjectCreate(BaseModel):
     name: str
     description: str | None = None
+    emoji: str | None = None
     default_language: str = "pt"
     bg_color: str = "#006600"
     text_color: str = "#FFFFFF"
@@ -30,6 +31,7 @@ class ProjectCreate(BaseModel):
 class ProjectUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
+    emoji: str | None = None
     default_language: str | None = None
     bg_color: str | None = None
     text_color: str | None = None
@@ -45,6 +47,7 @@ class ProjectResponse(BaseModel):
     id: uuid.UUID
     name: str
     description: str | None
+    emoji: str | None
     default_language: str
     bg_color: str
     text_color: str
@@ -59,6 +62,7 @@ class ProjectPublicResponse(BaseModel):
     id: uuid.UUID
     name: str
     description: str | None
+    emoji: str | None
     bg_color: str
     text_color: str
     accent_color: str
@@ -85,11 +89,13 @@ class ColorSuggestResponse(BaseModel):
     text_color: str
     accent_color: str
 
-    @field_validator("bg_color", "text_color", "accent_color")
-    @classmethod
-    def validate_color(cls, v: str) -> str:
-        result = _validate_hex_color(v)
-        return result if result is not None else v
+
+class EmojiSuggestRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=200)
+
+
+class EmojiSuggestResponse(BaseModel):
+    emoji: str
 
 
 class ProjectStatusResponse(BaseModel):

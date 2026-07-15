@@ -4,6 +4,7 @@ import { switchProject as apiSwitchProject, getProjects } from '../api/projects'
 export interface ActiveProject {
   id: string
   name: string
+  emoji: string | null
   bg_color: string
   text_color: string
   accent_color: string
@@ -66,6 +67,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       setActiveProject({
         id: project.id,
         name: project.name,
+        emoji: project.emoji,
         bg_color: project.bg_color,
         text_color: project.text_color,
         accent_color: project.accent_color,

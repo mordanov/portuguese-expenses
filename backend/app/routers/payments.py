@@ -4,14 +4,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
-from app.dependencies import get_current_project_id, require_admin
+from app.dependencies import get_current_project_id, require_admin, require_open_project
 from app.repositories.payment_repository import PaymentRepository
 from app.schemas.payment import PaymentCreateRequest, PaymentResponse
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
 
-@router.post("", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin)])
+@router.post("", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin), Depends(require_open_project)])
 async def record_payment(
     body: PaymentCreateRequest,
     session: AsyncSession = Depends(get_async_session),

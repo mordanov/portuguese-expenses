@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
-import { Project, ProjectCreate, ProjectUpdate, suggestColors } from '../../api/projects'
+import { Project, ProjectCreate, ProjectUpdate, suggestColors, suggestEmoji } from '../../api/projects'
 
 const LANGUAGES = [
   { code: 'pt', label: 'Portuguese (pt)' },
@@ -17,6 +17,7 @@ const LANGUAGES = [
 const schema = z.object({
   name: z.string().min(1, 'required'),
   description: z.string().max(500).optional().nullable(),
+  emoji: z.string().max(10).optional().nullable(),
   default_language: z.string().min(1, 'required'),
   bg_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'invalid hex'),
   text_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'invalid hex'),
@@ -51,6 +52,7 @@ export default function ProjectForm({ project, onSubmit, onCancel }: ProjectForm
   const { t } = useTranslation()
   const [suggesting, setSuggesting] = useState(false)
   const [suggestError, setSuggestError] = useState<string | null>(null)
+  const [suggestingEmoji, setSuggestingEmoji] = useState(false)
 
   const {
     register,
@@ -63,6 +65,7 @@ export default function ProjectForm({ project, onSubmit, onCancel }: ProjectForm
     defaultValues: {
       name: project?.name ?? '',
       description: project?.description ?? '',
+      emoji: project?.emoji ?? '',
       default_language: project?.default_language ?? 'pt',
       bg_color: project?.bg_color ?? '#006600',
       text_color: project?.text_color ?? '#FFFFFF',
@@ -82,6 +85,20 @@ export default function ProjectForm({ project, onSubmit, onCancel }: ProjectForm
   })()
 
   const contrastWarning = contrast !== null && contrast < 4.5
+
+  async function handleSuggestEmoji() {
+    const name = watch('name')
+    if (!name) return
+    setSuggestingEmoji(true)
+    try {
+      const result = await suggestEmoji(name)
+      setValue('emoji', result.emoji)
+    } catch {
+      // silent — user can type manually
+    } finally {
+      setSuggestingEmoji(false)
+    }
+  }
 
   async function handleSuggest() {
     const name = watch('name')
@@ -130,6 +147,29 @@ export default function ProjectForm({ project, onSubmit, onCancel }: ProjectForm
           type="text"
           className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pt-green text-sm"
           placeholder={t('projects.descriptionPlaceholder', 'Portuguese drunk sailors')}
+        />
+      </div>
+
+      {/* Emoji */}
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-sm font-medium text-gray-700">
+            {t('projects.emoji', 'Emoji')}
+          </label>
+          <button
+            type="button"
+            onClick={handleSuggestEmoji}
+            disabled={suggestingEmoji}
+            className="text-xs text-pt-green hover:underline disabled:opacity-50"
+          >
+            {suggestingEmoji ? t('common.loading') : t('projects.suggestEmoji', 'Suggest flag')}
+          </button>
+        </div>
+        <input
+          {...register('emoji')}
+          type="text"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pt-green text-sm"
+          placeholder="🇵🇹"
         />
       </div>
 

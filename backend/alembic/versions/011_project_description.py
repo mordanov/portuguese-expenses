@@ -1,4 +1,4 @@
-"""add description column to projects
+"""add description and emoji columns to projects
 
 Revision ID: 011_project_description
 Revises: 010_multi_project_support
@@ -15,7 +15,9 @@ depends_on = None
 
 def upgrade() -> None:
     op.add_column('projects', sa.Column('description', sa.String(500), nullable=True))
+    op.add_column('projects', sa.Column('emoji', sa.String(10), nullable=True))
 
 
 def downgrade() -> None:
+    op.drop_column('projects', 'emoji')
     op.drop_column('projects', 'description')

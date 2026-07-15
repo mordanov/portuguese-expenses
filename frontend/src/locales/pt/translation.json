@@ -284,7 +284,11 @@
     "members.empty": "Sem membros associados.",
     "colorScheme": "Esquema de Cores",
     "switchProject": "Seleccionar Projeto",
-    "empty": "Sem projetos ainda."
+    "empty": "Sem projetos ainda.",
+    "description": "Descrição",
+    "descriptionPlaceholder": "ex. Marinheiros bêbados portugueses",
+    "emoji": "Emoji",
+    "suggestEmoji": "Sugerir bandeira"
   },
   "common": {
     "loading": "A carregar…",

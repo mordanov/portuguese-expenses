@@ -284,7 +284,11 @@
     "members.empty": "No members linked.",
     "colorScheme": "Color Scheme",
     "switchProject": "Select Project",
-    "empty": "No projects yet."
+    "empty": "No projects yet.",
+    "description": "Description",
+    "descriptionPlaceholder": "e.g. Portuguese drunk sailors",
+    "emoji": "Emoji",
+    "suggestEmoji": "Suggest flag"
   },
   "common": {
     "loading": "Loading…",

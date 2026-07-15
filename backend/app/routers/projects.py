@@ -8,6 +8,8 @@ from app.dependencies import get_current_user, require_admin
 from app.schemas.project import (
     ColorSuggestRequest,
     ColorSuggestResponse,
+    EmojiSuggestRequest,
+    EmojiSuggestResponse,
     ProjectCreate,
     ProjectListResponse,
     ProjectMemberAdd,
@@ -93,6 +95,15 @@ async def reopen_project(
     project = await service.reopen_project(project_id)
     await session.commit()
     return ProjectStatusResponse(id=project.id, status=project.status)
+
+
+@router.post("/suggest-emoji", response_model=EmojiSuggestResponse, dependencies=[Depends(require_admin)])
+async def suggest_emoji(
+    body: EmojiSuggestRequest,
+    session: AsyncSession = Depends(get_async_session),
+) -> EmojiSuggestResponse:
+    service = ProjectService(session)
+    return await service.suggest_emoji(body.query)
 
 
 @router.post("/suggest-colors", response_model=ColorSuggestResponse, dependencies=[Depends(require_admin)])

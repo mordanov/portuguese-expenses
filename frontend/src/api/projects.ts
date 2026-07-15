@@ -4,6 +4,7 @@ export interface ProjectPublic {
   id: string
   name: string
   description: string | null
+  emoji: string | null
   bg_color: string
   text_color: string
   accent_color: string
@@ -14,6 +15,7 @@ export interface Project {
   id: string
   name: string
   description: string | null
+  emoji: string | null
   default_language: string
   bg_color: string
   text_color: string
@@ -25,6 +27,7 @@ export interface Project {
 export interface ProjectCreate {
   name: string
   description?: string | null
+  emoji?: string | null
   default_language: string
   bg_color: string
   text_color: string
@@ -34,6 +37,7 @@ export interface ProjectCreate {
 export interface ProjectUpdate {
   name?: string
   description?: string | null
+  emoji?: string | null
   default_language?: string
   bg_color?: string
   text_color?: string
@@ -85,6 +89,11 @@ export async function reopenProject(id: string): Promise<{ id: string; status: s
 
 export async function suggestColors(query: string): Promise<ColorSuggestResponse> {
   const res = await apiClient.post<ColorSuggestResponse>('/projects/suggest-colors', { query })
+  return res.data
+}
+
+export async function suggestEmoji(query: string): Promise<{ emoji: string }> {
+  const res = await apiClient.post<{ emoji: string }>('/projects/suggest-emoji', { query })
   return res.data
 }
 

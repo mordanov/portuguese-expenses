@@ -15,6 +15,7 @@ const LOCALES = [
   { code: 'pt', flag: '🇵🇹', label: 'PT' },
   { code: 'en', flag: '🇬🇧', label: 'EN' },
   { code: 'ru', flag: '🇷🇺', label: 'RU' },
+  { code: 'fr', flag: '🇫🇷', label: 'FR' },
 ]
 
 const loginSchema = z.object({
@@ -84,6 +85,7 @@ export default function LoginPage() {
           setActiveProject({
             id: matched.id,
             name: matched.name,
+            emoji: matched.emoji,
             bg_color: matched.bg_color,
             text_color: matched.text_color,
             accent_color: matched.accent_color,
@@ -105,7 +107,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[var(--project-bg,#006600)] flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="text-5xl mb-3">🇵🇹</div>
+          <div className="text-5xl mb-3">{selectedProject?.emoji ?? '🌍'}</div>
           <h1 className="text-2xl font-bold text-pt-green">{t('auth.loginSubtitle')}</h1>
           <p className="text-gray-500 text-sm mt-1">{t('auth.loginTitle')}</p>
           {selectedProject?.description && (
@@ -176,23 +178,16 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 flex justify-center gap-1">
-          {LOCALES.map(({ code, flag, label }, idx) => (
-            <span key={code} className="flex items-center">
-              {idx > 0 && <span className="text-gray-300 mx-1">|</span>}
-              <button
-                type="button"
-                onClick={() => handleLocaleChange(code)}
-                className={`px-2 py-1 rounded text-sm transition-colors ${
-                  i18n.language.startsWith(code)
-                    ? 'bg-pt-green text-white font-semibold'
-                    : 'text-gray-500 hover:text-pt-green'
-                }`}
-              >
-                {flag} {label}
-              </button>
-            </span>
-          ))}
+        <div className="mt-6 flex justify-center">
+          <select
+            value={LOCALES.find((l) => i18n.language.startsWith(l.code))?.code ?? 'en'}
+            onChange={(e) => handleLocaleChange(e.target.value)}
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-pt-green"
+          >
+            {LOCALES.map(({ code, flag, label }) => (
+              <option key={code} value={code}>{flag} {label}</option>
+            ))}
+          </select>
         </div>
       </div>
     </div>

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
-from app.dependencies import get_current_project_id, get_current_user, require_admin
+from app.dependencies import get_current_project_id, get_current_user, require_admin, require_open_project
 from app.schemas.member import MemberCreate, MemberListResponse, MemberResponse, MemberUpdate
 from app.services.member_service import MemberService
 
@@ -37,7 +37,7 @@ async def list_members(
     )
 
 
-@router.post("", response_model=MemberResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin)])
+@router.post("", response_model=MemberResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin), Depends(require_open_project)])
 async def create_member(
     body: MemberCreate,
     session: AsyncSession = Depends(get_async_session),

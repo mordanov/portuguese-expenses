@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.category import Category
 from app.models.project import Project
 from app.repositories.project_repository import ProjectRepository
-from app.schemas.project import ColorSuggestResponse, ProjectCreate, ProjectUpdate
+from app.schemas.project import ColorSuggestResponse, EmojiSuggestResponse, ProjectCreate, ProjectUpdate
 
 log = logging.getLogger(__name__)
 
@@ -46,6 +46,7 @@ class ProjectService:
         project = Project(
             name=data.name,
             description=data.description,
+            emoji=data.emoji,
             default_language=data.default_language,
             bg_color=data.bg_color,
             text_color=data.text_color,
@@ -68,6 +69,8 @@ class ProjectService:
             project.name = data.name
         if "description" in data.model_fields_set:
             project.description = data.description
+        if "emoji" in data.model_fields_set:
+            project.emoji = data.emoji
         if data.default_language is not None:
             project.default_language = data.default_language
         if data.bg_color is not None:
@@ -117,6 +120,37 @@ class ProjectService:
         removed = await self.repo.remove_member(project_id, member_id)
         if not removed:
             raise HTTPException(status_code=404, detail="Member not in project")
+
+    async def suggest_emoji(self, query: str) -> EmojiSuggestResponse:
+        from app.config import get_settings
+
+        settings = get_settings()
+        try:
+            import openai
+
+            client = openai.AsyncOpenAI(api_key=settings.openai_api_key)
+            response = await client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a flag and emoji selector. Given a country or project name, "
+                            "return the single most fitting flag emoji or relevant emoji. "
+                            "Return ONLY valid JSON with key 'emoji'. One emoji character only. No markdown."
+                        ),
+                    },
+                    {"role": "user", "content": f"Project name: {query}"},
+                ],
+                max_tokens=20,
+                response_format={"type": "json_object"},
+            )
+            raw = response.choices[0].message.content or ""
+            data = json.loads(raw)
+            return EmojiSuggestResponse(emoji=data.get("emoji", "🌍"))
+        except Exception as exc:
+            log.error("Emoji suggestion failed: %s", exc)
+            raise HTTPException(status_code=503, detail="Emoji suggestion service unavailable") from exc
 
     async def suggest_colors(self, query: str) -> ColorSuggestResponse:
         from app.config import get_settings

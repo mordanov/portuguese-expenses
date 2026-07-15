@@ -286,7 +286,11 @@
     "members.empty": "Участников нет.",
     "colorScheme": "Цветовая схема",
     "switchProject": "Выбрать проект",
-    "empty": "Проектов пока нет."
+    "empty": "Проектов пока нет.",
+    "description": "Описание",
+    "descriptionPlaceholder": "напр. Portugues drunk sailors",
+    "emoji": "Эмодзи",
+    "suggestEmoji": "Предложить флаг"
   },
   "common": {
     "loading": "Загрузка…",
