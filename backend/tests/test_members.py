@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_create_member(client, auth_headers):
+async def test_create_member(client, auth_headers, portugal_project):
     resp = await client.post("/members", json={"name": "Bob"}, headers=auth_headers)
     assert resp.status_code == 201
     data = resp.json()

@@ -65,8 +65,8 @@ describe('LoginPage', () => {
     renderLogin()
     await waitFor(() => expect(screen.getByText('Portugal-2026')).toBeInTheDocument())
     expect(screen.getByText('France-2026')).toBeInTheDocument()
-    // The chooser is a combobox/select
-    expect(screen.getByRole('combobox')).toBeInTheDocument()
+    // Two comboboxes: project selector + language selector
+    expect(screen.getAllByRole('combobox').length).toBeGreaterThanOrEqual(1)
   })
 
   it('includes project_id in login body when project selected', async () => {

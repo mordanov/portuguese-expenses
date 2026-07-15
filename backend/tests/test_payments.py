@@ -119,7 +119,7 @@ async def test_overpayment_reverses_direction(client, auth_headers, db_session, 
 
 
 @pytest.mark.asyncio
-async def test_payment_same_member_rejected(client, auth_headers, db_session):
+async def test_payment_same_member_rejected(client, auth_headers, db_session, portugal_project):
     """Payment to yourself must be rejected with 422."""
     alice, _ = await _members(db_session, "AlicePay4", "BobPay4")
 
@@ -132,7 +132,7 @@ async def test_payment_same_member_rejected(client, auth_headers, db_session):
 
 
 @pytest.mark.asyncio
-async def test_payment_zero_amount_rejected(client, auth_headers, db_session):
+async def test_payment_zero_amount_rejected(client, auth_headers, db_session, portugal_project):
     """Zero-amount payment must be rejected."""
     alice, bob = await _members(db_session, "AlicePay5", "BobPay5")
 

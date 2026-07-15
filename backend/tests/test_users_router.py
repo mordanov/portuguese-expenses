@@ -13,10 +13,10 @@ async def test_list_users(client, auth_headers, seeded_user):
 
 
 @pytest.mark.asyncio
-async def test_create_user(client, auth_headers):
+async def test_create_user(client, auth_headers, portugal_project):
     resp = await client.post(
         "/users",
-        json={"username": "newuser", "password": "pass1234", "role": "user"},
+        json={"username": "newuser", "password": "pass1234", "role": "user", "project_id": str(portugal_project.id)},
         headers=auth_headers,
     )
     assert resp.status_code == 201
@@ -24,10 +24,10 @@ async def test_create_user(client, auth_headers):
 
 
 @pytest.mark.asyncio
-async def test_create_user_duplicate_409(client, auth_headers, seeded_user):
+async def test_create_user_duplicate_409(client, auth_headers, seeded_user, portugal_project):
     resp = await client.post(
         "/users",
-        json={"username": "testuser", "password": "pass1234"},
+        json={"username": "testuser", "password": "pass1234", "role": "admin"},
         headers=auth_headers,
     )
     assert resp.status_code == 409
@@ -85,13 +85,13 @@ async def test_update_user_cannot_deactivate_self(client, auth_headers, seeded_u
 
 
 @pytest.mark.asyncio
-async def test_update_user_duplicate_username(client, auth_headers, seeded_user):
+async def test_update_user_duplicate_username(client, auth_headers, seeded_user, portugal_project):
     # Create second user
-    await client.post("/users", json={"username": "other_user", "password": "pass"}, headers=auth_headers)
+    await client.post("/users", json={"username": "other_user", "password": "pass", "role": "admin"}, headers=auth_headers)
     # Try to rename seeded_user to conflict with other_user — but seeded_user == JWT sub, so self-update
     # Create a third user and try renaming it to other_user
     create_resp = await client.post(
-        "/users", json={"username": "third_user", "password": "pass"}, headers=auth_headers
+        "/users", json={"username": "third_user", "password": "pass", "role": "admin"}, headers=auth_headers
     )
     third_id = create_resp.json()["id"]
     resp = await client.patch(

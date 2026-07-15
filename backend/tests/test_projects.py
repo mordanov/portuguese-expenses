@@ -255,11 +255,11 @@ async def test_add_member_closed_project(client, auth_headers, portugal_project)
     from app.models.family_member import FamilyMember
     from sqlalchemy import select
 
-    # Close project first
-    await client.post(f"/projects/{portugal_project.id}/close", headers=auth_headers)
-
+    # Create member first, then close the project
     resp_create = await client.post("/members", json={"name": "Carol"}, headers=auth_headers)
     carol_id = resp_create.json()["id"]
+
+    await client.post(f"/projects/{portugal_project.id}/close", headers=auth_headers)
 
     resp = await client.post(
         f"/projects/{portugal_project.id}/members",
