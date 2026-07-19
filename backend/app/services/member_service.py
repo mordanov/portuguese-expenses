@@ -28,7 +28,11 @@ class MemberService:
         if existing:
             raise HTTPException(status_code=409, detail="Member name already exists")
         member = FamilyMember(name=name)
-        return await self.repo.create(member)
+        member = await self.repo.create(member)
+        from app.models.project import ProjectMember
+        self.repo.session.add(ProjectMember(project_id=project_id, member_id=member.id))
+        await self.repo.session.flush()
+        return member
 
     async def update_member(
         self,
