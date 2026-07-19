@@ -67,6 +67,7 @@ jobs:
       - name: Pull and restart services
         run: |
           ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "cd /home/deploy/web-folders && \
+            "echo '${{ secrets.GHCR_PAT }}' | docker login ghcr.io -u mordanov --password-stdin && \
+             cd /home/deploy/web-folders && \
              docker compose pull portuguese-expenses-backend portuguese-expenses-frontend && \
              docker compose up -d --no-deps portuguese-expenses-backend portuguese-expenses-frontend"
