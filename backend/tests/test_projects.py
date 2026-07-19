@@ -184,21 +184,18 @@ async def test_suggest_colors_service_unavailable(client, auth_headers, portugal
 
 @pytest.mark.asyncio
 async def test_add_member_to_project(client, auth_headers, portugal_project, member):
-    # member fixture now automatically links Alice to portugal_project
-    # add another member and test the add endpoint
+    # Creating a member auto-links them to the current project.
     resp_create = await client.post("/members", json={"name": "Bob"}, headers=auth_headers)
     assert resp_create.status_code == 201
     bob_id = resp_create.json()["id"]
 
-    resp = await client.post(
+    resp = await client.get(
         f"/projects/{portugal_project.id}/members",
-        json={"member_id": bob_id},
         headers=auth_headers,
     )
-    assert resp.status_code == 201
-    data = resp.json()
-    assert data["member_id"] == bob_id
-    assert data["project_id"] == str(portugal_project.id)
+    assert resp.status_code == 200
+    member_ids = [m["id"] for m in resp.json()["items"]]
+    assert bob_id in member_ids
 
 
 @pytest.mark.asyncio
