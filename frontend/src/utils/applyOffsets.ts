@@ -2,8 +2,7 @@ import type { BalanceRow } from '../api/balances'
 import type { Member } from '../api/members'
 import type { OffsetRuleRecord } from '../api/offsetRules'
 
-type RuleType = 'absorb' | 'transfer'
-interface Rule { type: RuleType; personA: string; personB: string }
+interface Rule { personA: string; personB: string }
 
 export function applyOffsets(
   balances: BalanceRow[],
@@ -19,30 +18,16 @@ export function applyOffsets(
   for (const rule of rules) {
     if (!rule.personA || !rule.personB || rule.personA === rule.personB) continue
     const toMove: [string, number][] = []
-    const { type, personA, personB } = rule
-
-    if (type === 'absorb') {
-      for (const [key, amount] of ledger) {
-        const [, creditorId] = key.split('|')
-        if (creditorId === personA) toMove.push([key, amount])
-      }
-      for (const [key, amount] of toMove) {
-        const [debtorId] = key.split('|')
-        ledger.delete(key)
-        const newKey = `${debtorId}|${personB}`
-        ledger.set(newKey, (ledger.get(newKey) ?? 0) + amount)
-      }
-    } else {
-      for (const [key, amount] of ledger) {
-        const [debtorId] = key.split('|')
-        if (debtorId === personA) toMove.push([key, amount])
-      }
-      for (const [key, amount] of toMove) {
-        const [, creditorId] = key.split('|')
-        ledger.delete(key)
-        const newKey = `${personB}|${creditorId}`
-        ledger.set(newKey, (ledger.get(newKey) ?? 0) + amount)
-      }
+    const { personA, personB } = rule
+    for (const [key, amount] of ledger) {
+      const [debtorId] = key.split('|')
+      if (debtorId === personA) toMove.push([key, amount])
+    }
+    for (const [key, amount] of toMove) {
+      const [, creditorId] = key.split('|')
+      ledger.delete(key)
+      const newKey = `${personB}|${creditorId}`
+      ledger.set(newKey, (ledger.get(newKey) ?? 0) + amount)
     }
   }
 
@@ -88,5 +73,5 @@ export function applyOffsets(
 }
 
 export function rulesFromRecords(records: OffsetRuleRecord[]): Rule[] {
-  return records.map((r) => ({ type: r.type, personA: r.person_a_id, personB: r.person_b_id }))
+  return records.map((r) => ({ personA: r.person_a_id, personB: r.person_b_id }))
 }

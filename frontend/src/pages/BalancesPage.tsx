@@ -10,7 +10,7 @@ import { isAdmin } from '../api/auth'
 import { applyOffsets } from '../utils/applyOffsets'
 import { useProject } from '../context/ProjectContext'
 
-type RuleType = 'absorb' | 'transfer'
+type RuleType = 'transfer'
 
 interface DraftRule {
   id: null
@@ -197,12 +197,6 @@ export default function BalancesPage() {
           {admin && projectOpen && (
             <div className="flex gap-2">
               <button
-                onClick={() => addDraft('absorb')}
-                className="text-xs text-pt-green hover:text-green-800 font-medium border border-pt-green rounded px-2 py-1 transition-colors"
-              >
-                {t('balances.offsetting.addAbsorb')}
-              </button>
-              <button
                 onClick={() => addDraft('transfer')}
                 className="text-xs text-pt-green hover:text-green-800 font-medium border border-pt-green rounded px-2 py-1 transition-colors"
               >
@@ -220,27 +214,13 @@ export default function BalancesPage() {
           {/* Saved rules */}
           {savedUiRules.map((rule) => (
             <div key={rule.id} className="flex items-center gap-2 flex-wrap">
-              {rule.type === 'absorb' ? (
-                <>
-                  <span className="flex-1 min-w-28 text-sm text-gray-700 px-2 py-1.5 border border-gray-200 rounded-lg bg-gray-50">
-                    {membersData.find((m) => m.id === rule.personB)?.name ?? rule.personB}
-                  </span>
-                  <span className="text-xs text-gray-500 shrink-0">{t('balances.offsetting.takesDebtsOwedTo')}</span>
-                  <span className="flex-1 min-w-28 text-sm text-gray-700 px-2 py-1.5 border border-gray-200 rounded-lg bg-gray-50">
-                    {membersData.find((m) => m.id === rule.personA)?.name ?? rule.personA}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="flex-1 min-w-28 text-sm text-gray-700 px-2 py-1.5 border border-gray-200 rounded-lg bg-gray-50">
-                    {membersData.find((m) => m.id === rule.personA)?.name ?? rule.personA}
-                  </span>
-                  <span className="text-xs text-gray-500 shrink-0">{t('balances.offsetting.transfersDebtsTo')}</span>
-                  <span className="flex-1 min-w-28 text-sm text-gray-700 px-2 py-1.5 border border-gray-200 rounded-lg bg-gray-50">
-                    {membersData.find((m) => m.id === rule.personB)?.name ?? rule.personB}
-                  </span>
-                </>
-              )}
+              <span className="flex-1 min-w-28 text-sm text-gray-700 px-2 py-1.5 border border-gray-200 rounded-lg bg-gray-50">
+                {membersData.find((m) => m.id === rule.personA)?.name ?? rule.personA}
+              </span>
+              <span className="text-xs text-gray-500 shrink-0">{t('balances.offsetting.transfersDebtsTo')}</span>
+              <span className="flex-1 min-w-28 text-sm text-gray-700 px-2 py-1.5 border border-gray-200 rounded-lg bg-gray-50">
+                {membersData.find((m) => m.id === rule.personB)?.name ?? rule.personB}
+              </span>
               {admin && projectOpen && (
                 <button
                   onClick={() => removeSaved(rule.id)}
@@ -256,47 +236,23 @@ export default function BalancesPage() {
           {/* Draft rules (being built) */}
           {drafts.map((rule, idx) => (
             <div key={`draft-${idx}`} className="flex items-center gap-2 flex-wrap">
-              {rule.type === 'absorb' ? (
-                <>
-                  <select
-                    value={rule.personB}
-                    onChange={(e) => updateDraft(idx, 'personB', e.target.value)}
-                    className="flex-1 min-w-28 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
-                  >
-                    <option value="">{t('balances.offsetting.person')}</option>
-                    {membersData.filter((m) => m.id !== rule.personA).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-                  </select>
-                  <span className="text-xs text-gray-500 shrink-0">{t('balances.offsetting.takesDebtsOwedTo')}</span>
-                  <select
-                    value={rule.personA}
-                    onChange={(e) => updateDraft(idx, 'personA', e.target.value)}
-                    className="flex-1 min-w-28 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
-                  >
-                    <option value="">{t('balances.offsetting.person')}</option>
-                    {membersData.filter((m) => m.id !== rule.personB).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-                  </select>
-                </>
-              ) : (
-                <>
-                  <select
-                    value={rule.personA}
-                    onChange={(e) => updateDraft(idx, 'personA', e.target.value)}
-                    className="flex-1 min-w-28 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
-                  >
-                    <option value="">{t('balances.offsetting.person')}</option>
-                    {membersData.filter((m) => m.id !== rule.personB).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-                  </select>
-                  <span className="text-xs text-gray-500 shrink-0">{t('balances.offsetting.transfersDebtsTo')}</span>
-                  <select
-                    value={rule.personB}
-                    onChange={(e) => updateDraft(idx, 'personB', e.target.value)}
-                    className="flex-1 min-w-28 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
-                  >
-                    <option value="">{t('balances.offsetting.person')}</option>
-                    {membersData.filter((m) => m.id !== rule.personA).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-                  </select>
-                </>
-              )}
+              <select
+                value={rule.personA}
+                onChange={(e) => updateDraft(idx, 'personA', e.target.value)}
+                className="flex-1 min-w-28 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
+              >
+                <option value="">{t('balances.offsetting.person')}</option>
+                {membersData.filter((m) => m.id !== rule.personB).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+              </select>
+              <span className="text-xs text-gray-500 shrink-0">{t('balances.offsetting.transfersDebtsTo')}</span>
+              <select
+                value={rule.personB}
+                onChange={(e) => updateDraft(idx, 'personB', e.target.value)}
+                className="flex-1 min-w-28 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pt-green"
+              >
+                <option value="">{t('balances.offsetting.person')}</option>
+                {membersData.filter((m) => m.id !== rule.personA).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+              </select>
               {admin && (
                 <button
                   onClick={() => removeDraft(idx)}
