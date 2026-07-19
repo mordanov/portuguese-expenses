@@ -23,6 +23,16 @@ class OffsetRuleRepository:
         await self.session.refresh(rule)
         return rule
 
+    async def get_by_persons(self, project_id: uuid.UUID, person_a_id: uuid.UUID, person_b_id: uuid.UUID) -> OffsetRule | None:
+        result = await self.session.execute(
+            select(OffsetRule).where(
+                OffsetRule.project_id == project_id,
+                OffsetRule.person_a_id == person_a_id,
+                OffsetRule.person_b_id == person_b_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
     async def get_by_id(self, id: uuid.UUID) -> OffsetRule | None:
         result = await self.session.execute(select(OffsetRule).where(OffsetRule.id == id))
         return result.scalar_one_or_none()

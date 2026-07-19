@@ -29,6 +29,9 @@ async def create_offset_rule(
     project_id: uuid.UUID = Depends(get_current_project_id),
 ) -> OffsetRuleResponse:
     repo = OffsetRuleRepository(session)
+    existing = await repo.get_by_persons(project_id, body.person_a_id, body.person_b_id)
+    if existing:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Offset rule already exists")
     rule = await repo.create(type=body.type, project_id=project_id, person_a_id=body.person_a_id, person_b_id=body.person_b_id)
     await session.commit()
     return OffsetRuleResponse.model_validate(rule)
