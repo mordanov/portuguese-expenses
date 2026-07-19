@@ -10,18 +10,14 @@ import { isAdmin } from '../api/auth'
 import { applyOffsets } from '../utils/applyOffsets'
 import { useProject } from '../context/ProjectContext'
 
-type RuleType = 'transfer'
-
 interface DraftRule {
   id: null
-  type: RuleType
   personA: string
   personB: string
 }
 
 interface SavedRule {
   id: string
-  type: RuleType
   personA: string
   personB: string
 }
@@ -63,14 +59,13 @@ export default function BalancesPage() {
   // Merge saved rules (from DB) with drafts (unsaved UI state) into one list for display
   const savedUiRules: SavedRule[] = savedRules.map((r: OffsetRuleRecord) => ({
     id: r.id,
-    type: r.type,
     personA: r.person_a_id,
     personB: r.person_b_id,
   }))
   const allRules: UiRule[] = [...savedUiRules, ...drafts]
 
-  function addDraft(type: RuleType) {
-    setDrafts((d) => [...d, { id: null, type, personA: '', personB: '' }])
+  function addDraft() {
+    setDrafts((d) => [...d, { id: null, personA: '', personB: '' }])
   }
 
   function updateDraft(idx: number, field: 'personA' | 'personB', value: string) {
@@ -78,7 +73,7 @@ export default function BalancesPage() {
     const draft = updated[idx]
     if (draft.personA && draft.personB && draft.personA !== draft.personB) {
       // Both persons chosen — persist to DB and drop the draft
-      createRule.mutate({ type: draft.type, person_a_id: draft.personA, person_b_id: draft.personB })
+      createRule.mutate({ type: 'transfer', person_a_id: draft.personA, person_b_id: draft.personB })
       setDrafts(updated.filter((_, i) => i !== idx))
     } else {
       setDrafts(updated)
@@ -197,7 +192,7 @@ export default function BalancesPage() {
           {admin && projectOpen && (
             <div className="flex gap-2">
               <button
-                onClick={() => addDraft('transfer')}
+                onClick={() => addDraft()}
                 className="text-xs text-pt-green hover:text-green-800 font-medium border border-pt-green rounded px-2 py-1 transition-colors"
               >
                 {t('balances.offsetting.addTransfer')}
