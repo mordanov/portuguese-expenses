@@ -386,7 +386,7 @@ async def test_offset_rule_crud(client, auth_headers, member):
     # Create rule
     resp = await client.post(
         "/offset-rules",
-        json={"type": "absorb", "person_a_id": str(member.id), "person_b_id": bob_id},
+        json={"type": "transfer", "person_a_id": str(member.id), "person_b_id": bob_id},
         headers=auth_headers,
     )
     assert resp.status_code == 201

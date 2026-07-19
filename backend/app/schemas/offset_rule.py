@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 
 class OffsetRuleCreateRequest(BaseModel):
-    type: Literal["absorb", "transfer"]
+    type: Literal["transfer"]
     person_a_id: uuid.UUID
     person_b_id: uuid.UUID
 
