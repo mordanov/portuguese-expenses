@@ -319,12 +319,12 @@ async def test_update_item_category(client, auth_headers, member, category):
 
 
 @pytest.mark.asyncio
-async def test_member_service_can_pay_and_kid_conflict(db_session):
+async def test_member_service_can_pay_and_kid_conflict(db_session, portugal_project):
     from fastapi import HTTPException
     from app.services.member_service import MemberService
 
     svc = MemberService(db_session)
-    m = await svc.create_member("KidOrPayer")
+    m = await svc.create_member("KidOrPayer", portugal_project.id)
 
     with pytest.raises(HTTPException) as exc:
         await svc.update_member(m.id, None, None, can_pay=True, is_kid=True)
@@ -332,13 +332,13 @@ async def test_member_service_can_pay_and_kid_conflict(db_session):
 
 
 @pytest.mark.asyncio
-async def test_member_service_set_kid_conflicts_with_can_pay(db_session):
+async def test_member_service_set_kid_conflicts_with_can_pay(db_session, portugal_project):
     """Setting is_kid=True on a can_pay=True member → 422."""
     from fastapi import HTTPException
     from app.services.member_service import MemberService
 
     svc = MemberService(db_session)
-    m = await svc.create_member("PayerBecomesKid")
+    m = await svc.create_member("PayerBecomesKid", portugal_project.id)
     # Make them a payer first
     await svc.update_member(m.id, None, None, can_pay=True)
 

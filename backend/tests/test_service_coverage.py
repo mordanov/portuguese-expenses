@@ -7,29 +7,29 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_member_service_create_duplicate(db_session):
+async def test_member_service_create_duplicate(db_session, portugal_project):
     from fastapi import HTTPException
 
     from app.services.member_service import MemberService
 
     service = MemberService(db_session)
-    await service.create_member("CovAlice")
+    await service.create_member("CovAlice", portugal_project.id)
     with pytest.raises(HTTPException) as exc:
-        await service.create_member("CovAlice")
+        await service.create_member("CovAlice", portugal_project.id)
     assert exc.value.status_code == 409
 
 
 @pytest.mark.asyncio
-async def test_member_service_update_name_conflict(db_session):
+async def test_member_service_update_name_conflict(db_session, portugal_project):
     from fastapi import HTTPException
 
     from app.services.member_service import MemberService
 
     service = MemberService(db_session)
-    m1 = await service.create_member("CovAlice2")
-    await service.create_member("CovBob2")
+    m1 = await service.create_member("CovAlice2", portugal_project.id)
+    await service.create_member("CovBob2", portugal_project.id)
     with pytest.raises(HTTPException) as exc:
-        await service.update_member(m1.id, "CovBob2", None)
+        await service.update_member(m1.id, "CovBob2", None, project_id=portugal_project.id)
     assert exc.value.status_code == 409
 
 
