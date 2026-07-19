@@ -23,8 +23,8 @@ class MemberService:
             return await self.repo.list_active(page=page, page_size=page_size)
         return await self.repo.list_all(page=page, page_size=page_size)
 
-    async def create_member(self, name: str) -> FamilyMember:
-        existing = await self.repo.get_by_name(name)
+    async def create_member(self, name: str, project_id: uuid.UUID) -> FamilyMember:
+        existing = await self.repo.get_by_name_in_project(name, project_id)
         if existing:
             raise HTTPException(status_code=409, detail="Member name already exists")
         member = FamilyMember(name=name)
@@ -37,12 +37,16 @@ class MemberService:
         is_active: bool | None,
         can_pay: bool | None = None,
         is_kid: bool | None = None,
+        project_id: uuid.UUID | None = None,
     ) -> FamilyMember:
         member = await self.repo.get_by_id(id)
         if not member:
             raise HTTPException(status_code=404, detail="Member not found")
         if name is not None:
-            existing = await self.repo.get_by_name(name)
+            if project_id is not None:
+                existing = await self.repo.get_by_name_in_project(name, project_id)
+            else:
+                existing = await self.repo.get_by_name(name)
             if existing and existing.id != id:
                 raise HTTPException(status_code=409, detail="Member name already exists")
             member.name = name

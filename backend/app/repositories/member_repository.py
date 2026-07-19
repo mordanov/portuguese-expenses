@@ -45,6 +45,15 @@ class MemberRepository(BaseRepository[FamilyMember]):
         result = await self.session.execute(select(FamilyMember).where(FamilyMember.name == name))
         return result.scalar_one_or_none()
 
+    async def get_by_name_in_project(self, name: str, project_id: uuid.UUID) -> FamilyMember | None:
+        ProjectMember = _import_project_member()
+        result = await self.session.execute(
+            select(FamilyMember)
+            .join(ProjectMember, ProjectMember.member_id == FamilyMember.id)
+            .where(ProjectMember.project_id == project_id, FamilyMember.name == name)
+        )
+        return result.scalar_one_or_none()
+
     async def create(self, instance: FamilyMember) -> FamilyMember:
         return await super().create(instance)
 

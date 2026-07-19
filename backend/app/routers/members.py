@@ -41,9 +41,10 @@ async def list_members(
 async def create_member(
     body: MemberCreate,
     session: AsyncSession = Depends(get_async_session),
+    project_id: uuid.UUID = Depends(get_current_project_id),
 ) -> MemberResponse:
     service = MemberService(session)
-    member = await service.create_member(body.name)
+    member = await service.create_member(body.name, project_id)
     await session.commit()
     return MemberResponse.model_validate(member)
 
@@ -53,9 +54,10 @@ async def update_member(
     member_id: uuid.UUID,
     body: MemberUpdate,
     session: AsyncSession = Depends(get_async_session),
+    project_id: uuid.UUID = Depends(get_current_project_id),
 ) -> MemberResponse:
     service = MemberService(session)
-    member = await service.update_member(member_id, body.name, body.is_active, body.can_pay, body.is_kid)
+    member = await service.update_member(member_id, body.name, body.is_active, body.can_pay, body.is_kid, project_id)
     await session.commit()
     return MemberResponse.model_validate(member)
 

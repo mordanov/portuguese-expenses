@@ -12,7 +12,7 @@ class FamilyMember(Base):
     __tablename__ = "family_members"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     can_pay: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_kid: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
