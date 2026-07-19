@@ -6,7 +6,7 @@ Create Date: 2026-07-19
 """
 from alembic import op
 
-revision = '012_member_name_unique_per_project'
+revision = '012_member_name_per_project'
 down_revision = '011_project_description'
 branch_labels = None
 depends_on = None
